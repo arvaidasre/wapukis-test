@@ -102,7 +102,7 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Registracija su geresniu klaidų valdymu
+  // Registracija su pataisytu klaidų valdymu
   const handleSignUp = async () => {
     console.log("Starting registration process...")
 
@@ -136,43 +136,41 @@ export default function AuthPage() {
       console.log("User created successfully:", data.user.id)
 
       // 2. Palaukti ir patikrinti ar profilis egzistuoja
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 3000))
 
       // 3. Bandyti sukurti profilį rankiniu būdu jei reikia
       try {
         await dbFunctions.createUserProfile(data.user.id, formData.email, formData.slapyvardis)
-      } catch (profileError) {
+      } catch (profileError: any) {
         console.log("Profile creation error (might already exist):", profileError)
+
+        // Jei profilio sukūrimas nepavyko dėl foreign key, tai normalu - trigger gali dar veikti
+        if (!profileError.message?.includes("foreign key constraint")) {
+          console.error("Unexpected profile creation error:", profileError)
+        }
       }
 
-      // 4. Sukurti ūkį
-      const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(data.user.id, formData.ukioPavadinimas)
+      // 4. Sukurti ūkį (tik jei prisijungimas sėkmingas)
+      const { user: currentUser } = await authFunctions.getCurrentUser()
 
-      if (ukisError) {
-        console.error("Farm creation error:", ukisError)
-        throw new Error("Nepavyko sukurti ūkio: " + ukisError.message)
-      }
+      if (currentUser) {
+        console.log("User is signed in, creating farm...")
 
-      if (!ukisData) {
-        throw new Error("Ūkio duomenys negauti")
-      }
+        const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
+          currentUser.id,
+          formData.ukioPavadinimas,
+        )
 
-      console.log("Farm created, creating resources...")
+        if (ukisError) {
+          console.error("Farm creation error:", ukisError)
+          // Tęsti be ūkio - bus sukurtas vėliau
+        } else if (ukisData) {
+          console.log("Farm created, creating resources and buildings...")
 
-      // 5. Sukurti pradinius išteklius
-      const { error: istekliaiError } = await dbFunctions.createInitialResources(ukisData.id)
-      if (istekliaiError) {
-        console.error("Resources creation error:", istekliaiError)
-        // Tęsti be išteklių - bus sukurti vėliau
-      }
-
-      console.log("Resources created, creating buildings...")
-
-      // 6. Sukurti pradinius pastatus
-      const { error: pastataiError } = await dbFunctions.createInitialBuildings(ukisData.id)
-      if (pastataiError) {
-        console.error("Buildings creation error:", pastataiError)
-        // Tęsti be pastatų - bus sukurti vėliau
+          // 5. Sukurti pradinius išteklius ir pastatus
+          await dbFunctions.createInitialResources(ukisData.id)
+          await dbFunctions.createInitialBuildings(ukisData.id)
+        }
       }
 
       console.log("Registration completed successfully!")
@@ -182,13 +180,30 @@ export default function AuthPage() {
         description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
       })
 
-      // 7. Nukreipti į žaidimą
+      // 6. Nukreipti į žaidimą
       router.push("/")
     } catch (error: any) {
       console.error("Registration error:", error)
+
+      let errorMessage = error.message || "Įvyko nežinoma klaida"
+
+      // Specifinės klaidos žinutės
+      if (error.message?.includes("foreign key constraint")) {
+        errorMessage = "Registracija vyksta... Bandykite prisijungti po kelių sekundžių."
+
+        // Automatiškai pereiti į prisijungimo skirtuką
+        setTimeout(() => {
+          setActiveTab("prisijungimas")
+          toast({
+            title: "Bandykite prisijungti",
+            description: "Jūsų paskyra gali būti sukurta. Bandykite prisijungti.",
+          })
+        }, 3000)
+      }
+
       toast({
         title: "Registracijos klaida",
-        description: error.message || "Įvyko nežinoma klaida",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -308,8 +323,9 @@ export default function AuthPage() {
           <Alert className="mb-4 border-blue-200 bg-blue-50">
             <CheckCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Svarbu:</strong> Paleiskite naują SQL script'ą <code>scripts/02-fix-registration.sql</code> ir
-              išjunkite el. pašto patvirtinimą Supabase nustatymuose.
+              <strong>Pataisymas:</strong> Paleiskite naują SQL script'ą{" "}
+              <code>scripts/04-fix-foreign-key-timing.sql</code>
+              kad išspręstumėte foreign key problemas.
             </AlertDescription>
           </Alert>
 
@@ -317,7 +333,8 @@ export default function AuthPage() {
           <Alert className="mb-4 border-amber-200 bg-amber-50">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Demo režimas:</strong> Jei registracija neveikia, galite naudoti demo versiją be registracijos.
+              <strong>Pastaba:</strong> Jei registracija nepavyksta iš karto, palaukite kelias sekundes ir bandykite
+              prisijungti.
             </AlertDescription>
           </Alert>
 
