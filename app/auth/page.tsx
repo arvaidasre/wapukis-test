@@ -11,7 +11,7 @@ import { PasswordStrength } from "@/components/auth/password-strength"
 import { useToast } from "@/components/ui/use-toast"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, AlertCircle } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, AlertCircle, CheckCircle } from "lucide-react"
 
 export default function AuthPage() {
   const { toast } = useToast()
@@ -203,12 +203,11 @@ export default function AuthPage() {
 
         toast({
           title: "Registracija sėkminga! 🎉",
-          description: "Patikrinkite el. paštą ir patvirtinkite paskyrą, kad galėtumėte prisijungti.",
+          description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
         })
 
-        // Pereiti į prisijungimo skirtuką
-        setActiveTab("prisijungimas")
-        setFormData((prev) => ({ ...prev, password: "", confirmPassword: "" }))
+        // Iš karto nukreipti į žaidimą
+        router.push("/")
       } else {
         throw new Error("Nepavyko sukurti vartotojo")
       }
@@ -340,6 +339,15 @@ export default function AuthPage() {
         </CardHeader>
 
         <CardContent>
+          {/* Pranešimas apie el. pašto patvirtinimą */}
+          <Alert className="mb-4 border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>Geros žinios!</strong> El. pašto patvirtinimas išjungtas - galite iš karto pradėti žaisti po
+              registracijos.
+            </AlertDescription>
+          </Alert>
+
           {/* Demo režimo pranešimas */}
           <Alert className="mb-4 border-amber-200 bg-amber-50">
             <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -561,8 +569,8 @@ export default function AuthPage() {
 
               <Alert>
                 <AlertDescription className="text-sm">
-                  Registruodamiesi sutinkate su mūsų naudojimo sąlygomis ir privatumo politika. Po registracijos gausite
-                  el. laišką su patvirtinimo nuoroda.
+                  Registruodamiesi sutinkate su mūsų naudojimo sąlygomis ir privatumo politika. Po registracijos
+                  galėsite iš karto pradėti žaisti!
                 </AlertDescription>
               </Alert>
             </TabsContent>

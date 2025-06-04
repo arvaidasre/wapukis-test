@@ -71,7 +71,7 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija
+  // Registracija be el. pašto patvirtinimo
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -82,6 +82,8 @@ export const authFunctions = {
             slapyvardis,
             ukio_pavadinimas: ukioPavadinimas,
           },
+          // Išjungti el. pašto patvirtinimą
+          emailRedirectTo: undefined,
         },
       })
 
@@ -244,7 +246,7 @@ export const dbFunctions = {
             id: userId,
             el_pastas: email,
             slapyvardis,
-            el_pasto_patvirtintas: false,
+            el_pasto_patvirtintas: true, // Automatiškai patvirtinti el. paštą
           },
         ])
         .select()
