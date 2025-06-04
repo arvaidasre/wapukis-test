@@ -400,7 +400,6 @@ export const dbFunctions = {
       return { error: error }
     }
   },
-
-  // Pridėti supabase objektą
-  supabase,
 }
+
+// Eksportuoti supabase objektą

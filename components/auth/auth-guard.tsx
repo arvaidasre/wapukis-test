@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { authFunctions } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
@@ -23,7 +23,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
     const {
       data: { subscription },
-    } = authFunctions.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session)
       if (event === "SIGNED_IN") {
         setAuthenticated(true)
@@ -43,7 +43,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       console.log("Checking authentication...")
 
       // Pirmiausia patikriname, ar yra aktyvi sesija
-      const { data: sessionData, error: sessionError } = await authFunctions.supabase.auth.getSession()
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError) {
         console.error("Session error:", sessionError)
@@ -65,7 +65,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
       const {
         data: { user },
         error,
-      } = await authFunctions.supabase.auth.getUser()
+      } = await supabase.auth.getUser()
 
       if (error || !user) {
         console.log("No user found, showing demo option")
