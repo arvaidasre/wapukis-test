@@ -170,23 +170,51 @@ export const authFunctions = {
     }
   },
 
-  // Gauti dabartinį vartotoją
+  // Gauti dabartinį vartotoją - patobulinta versija
   async getCurrentUser() {
     try {
+      // Pirmiausia patikriname, ar yra sesija
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+
+      // Jei yra sesijos klaida arba nėra sesijos, grąžiname null be klaidos
+      if (sessionError) {
+        console.log("Session error:", sessionError.message)
+        return { user: null, error: null }
+      }
+
+      if (!sessionData?.session) {
+        console.log("No active session found")
+        return { user: null, error: null }
+      }
+
+      // Jei yra sesija, bandome gauti vartotoją
       const {
         data: { user },
         error,
       } = await supabase.auth.getUser()
 
       if (error) {
-        console.error("Supabase getCurrentUser error:", error)
-        throw new Error(error.message || "Vartotojo gavimo klaida")
+        console.log("User fetch error:", error.message)
+        // Net jei yra klaida gaunant vartotoją, negrąžiname klaidos
+        return { user: null, error: null }
       }
 
       return { user, error: null }
     } catch (error: any) {
-      console.error("GetCurrentUser function error:", error)
-      return { user: null, error: error }
+      console.log("GetCurrentUser function error:", error.message)
+      // Visais atvejais grąžiname null be klaidos, kad nesutrukdytų demo režimui
+      return { user: null, error: null }
+    }
+  },
+
+  // Patikrinti, ar yra aktyvi sesija
+  async hasActiveSession() {
+    try {
+      const { data: sessionData, error } = await supabase.auth.getSession()
+      return !error && !!sessionData?.session
+    } catch (error) {
+      console.log("Session check error:", error)
+      return false
     }
   },
 

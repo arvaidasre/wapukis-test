@@ -52,10 +52,19 @@ function DidysisUkisContent() {
     try {
       console.log("Initializing game...")
 
-      // Bandyti gauti dabartinį vartotoją
-      const { user, error } = await authFunctions.getCurrentUser()
+      // Pirmiausia patikriname, ar yra aktyvi sesija
+      const hasSession = await authFunctions.hasActiveSession()
 
-      if (error || !user) {
+      if (!hasSession) {
+        console.log("No active session found, using demo mode")
+        initializeDemoGame()
+        return
+      }
+
+      // Bandyti gauti dabartinį vartotoją
+      const { user } = await authFunctions.getCurrentUser()
+
+      if (!user) {
         console.log("No authenticated user, using demo mode")
         initializeDemoGame()
         return
@@ -109,7 +118,7 @@ function DidysisUkisContent() {
 
       console.log("Game initialized successfully with database")
     } catch (error) {
-      console.error("Game initialization error:", error)
+      console.log("Game initialization error:", error)
       console.log("Falling back to demo mode")
       initializeDemoGame()
     }

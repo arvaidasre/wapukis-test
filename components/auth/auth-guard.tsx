@@ -41,21 +41,32 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const checkAuth = async () => {
     try {
       console.log("Checking authentication...")
-      const { user, error } = await authFunctions.getCurrentUser()
 
-      console.log("Auth check result:", { user, error })
+      // Naudojame naują hasActiveSession funkciją
+      const hasSession = await authFunctions.hasActiveSession()
 
-      if (user && !error) {
+      if (!hasSession) {
+        console.log("No active session found, showing demo option")
+        setAuthenticated(false)
+        setShowDemo(true)
+        setLoading(false)
+        return
+      }
+
+      // Jei yra sesija, bandome gauti vartotoją
+      const { user } = await authFunctions.getCurrentUser()
+
+      if (user) {
         console.log("User is authenticated")
         setAuthenticated(true)
         setShowDemo(false)
       } else {
-        console.log("User is not authenticated, showing demo option")
+        console.log("No user found, showing demo option")
         setAuthenticated(false)
         setShowDemo(true)
       }
     } catch (error) {
-      console.error("Auth check error:", error)
+      console.log("Auth check error:", error)
       setAuthenticated(false)
       setShowDemo(true)
     } finally {

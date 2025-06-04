@@ -41,13 +41,21 @@ export default function AuthPage() {
 
   const checkExistingAuth = async () => {
     try {
+      // Pirmiausia patikriname, ar yra aktyvi sesija
+      const hasSession = await authFunctions.hasActiveSession()
+
+      if (!hasSession) {
+        console.log("No existing auth session")
+        return
+      }
+
       const { user } = await authFunctions.getCurrentUser()
       if (user) {
         router.push("/")
       }
     } catch (error) {
       // Vartotojas neprisijungęs, tęsti normaliai
-      console.log("No existing auth session")
+      console.log("No existing auth session or error:", error)
     }
   }
 

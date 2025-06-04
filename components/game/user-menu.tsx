@@ -34,19 +34,30 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
 
   const loadUserData = async () => {
     try {
+      // Pirmiausia patikriname, ar yra aktyvi sesija
+      const hasSession = await authFunctions.hasActiveSession()
+
+      if (!hasSession) {
+        console.log("No active session found in UserMenu")
+        return
+      }
+
       const { user } = await authFunctions.getCurrentUser()
-      if (user) {
-        setUser(user)
+      if (!user) {
+        console.log("No user found in UserMenu")
+        return
+      }
 
-        // Gauti vartotojo profilį
-        const { data: profile } = await dbFunctions.supabase.from("vartotojai").select("*").eq("id", user.id).single()
+      setUser(user)
 
-        if (profile) {
-          setUserProfile(profile)
-        }
+      // Gauti vartotojo profilį
+      const { data: profile } = await dbFunctions.supabase.from("vartotojai").select("*").eq("id", user.id).single()
+
+      if (profile) {
+        setUserProfile(profile)
       }
     } catch (error) {
-      console.error("Error loading user data:", error)
+      console.log("Error loading user data:", error)
     }
   }
 
