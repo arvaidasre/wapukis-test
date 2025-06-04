@@ -71,19 +71,19 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija su pataisytu timing'u
+  // Supaprastinta registracija, kuri pasikliauja trigger'iu
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
-      console.log("Starting signUp process...")
+      console.log("Starting simplified signUp process...")
 
-      // 1. Pirmiausia patikrinti ar vartotojas jau egzistuoja
+      // 1. Pirmiausia atsijungti jei reikia
       const { data: existingUser } = await supabase.auth.getUser()
       if (existingUser?.user) {
         console.log("User already signed in, signing out first...")
         await supabase.auth.signOut()
       }
 
-      // 2. Registruoti vartotoją
+      // 2. Registruoti vartotoją - trigger turėtų sukurti profilį automatiškai
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -118,108 +118,44 @@ export const authFunctions = {
 
       console.log("User created successfully:", data.user.id)
 
-      // 3. Palaukti ilgiau, kad auth.users įrašas būtų pilnai sukurtas
-      console.log("Waiting for auth user to be fully created...")
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-
-      // 4. Patikrinti ar vartotojas egzistuoja auth.users lentelėje
-      let authUserExists = false
-      let retryCount = 0
-      const maxRetries = 5
-
-      while (!authUserExists && retryCount < maxRetries) {
-        try {
-          const { data: authUser, error: authError } = await supabase.auth.getUser()
-
-          if (!authError && authUser?.user?.id === data.user.id) {
-            authUserExists = true
-            console.log("Auth user confirmed to exist")
-          } else {
-            console.log(`Auth user not found, retry ${retryCount + 1}/${maxRetries}`)
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-            retryCount++
-          }
-        } catch (checkError) {
-          console.log("Error checking auth user:", checkError)
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-          retryCount++
-        }
-      }
-
-      if (!authUserExists) {
-        console.log("Auth user not confirmed, but continuing...")
-      }
-
-      // 5. Patikrinti ar profilis egzistuoja
-      const { data: profileData, error: profileError } = await supabase
-        .from("vartotojai")
-        .select("id")
-        .eq("id", data.user.id)
-        .single()
-
-      if (profileError || !profileData) {
-        console.log("Profile not found, creating manually...")
-
-        // Bandyti sukurti profilį su retry logika
-        let profileCreated = false
-        let profileRetryCount = 0
-        const maxProfileRetries = 3
-
-        while (!profileCreated && profileRetryCount < maxProfileRetries) {
-          try {
-            const { error: insertError } = await supabase.from("vartotojai").insert({
-              id: data.user.id,
-              el_pastas: email,
-              slapyvardis: slapyvardis,
-            })
-
-            if (insertError) {
-              if (insertError.message.includes("foreign key constraint")) {
-                console.log(`Foreign key constraint error, retry ${profileRetryCount + 1}/${maxProfileRetries}`)
-                await new Promise((resolve) => setTimeout(resolve, 2000))
-                profileRetryCount++
-              } else if (insertError.message.includes("duplicate key")) {
-                console.log("Profile already exists (duplicate key)")
-                profileCreated = true
-              } else {
-                throw insertError
-              }
-            } else {
-              console.log("Profile created manually")
-              profileCreated = true
-            }
-          } catch (retryError) {
-            console.error(`Profile creation retry ${profileRetryCount + 1} failed:`, retryError)
-            profileRetryCount++
-            if (profileRetryCount >= maxProfileRetries) {
-              console.log("Max profile creation retries reached, continuing without profile")
-              break
-            }
-            await new Promise((resolve) => setTimeout(resolve, 2000))
-          }
-        }
-      } else {
-        console.log("Profile already exists")
-      }
-
-      // 6. Prisijungti automatiškai
-      console.log("Attempting auto sign-in...")
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // 3. Bandyti prisijungti iš karto (jei el. pašto patvirtinimas išjungtas)
+      console.log("Attempting immediate sign-in...")
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
-        console.error("Auto sign-in error:", signInError)
-        // Tęsti be automatinio prisijungimo - vartotojas galės prisijungti rankiniu būdu
-      } else {
-        console.log("Auto sign-in successful")
+        console.log("Immediate sign-in failed:", signInError.message)
+        // Tai normalu jei reikia el. pašto patvirtinimo
+        return {
+          data,
+          error: null,
+          needsConfirmation: true,
+          message: "Registracija sėkminga! Jei reikia, patvirtinkite el. paštą ir prisijunkite.",
+        }
       }
 
-      return { data, error: null }
+      if (signInData?.user) {
+        console.log("Immediate sign-in successful")
+        return {
+          data: signInData,
+          error: null,
+          needsConfirmation: false,
+          message: "Registracija ir prisijungimas sėkmingas!",
+        }
+      }
+
+      // Jei nepavyko prisijungti, bet registracija sėkminga
+      return {
+        data,
+        error: null,
+        needsConfirmation: true,
+        message: "Registracija sėkminga! Prisijunkite su savo duomenimis.",
+      }
     } catch (error: any) {
       console.error("SignUp function error:", error)
-      return { data: null, error: error }
+      return { data: null, error: error, needsConfirmation: false }
     }
   },
 
@@ -352,17 +288,17 @@ export const authFunctions = {
   },
 }
 
-// Duomenų bazės funkcijos su geresniu klaidų valdymu
+// Duomenų bazės funkcijos
 export const dbFunctions = {
-  // Pataisyta createUserProfile funkcija su geresniu timing'u
-  async createUserProfile(userId: string, email: string, slapyvardis: string) {
+  // Patikrinti ar vartotojo profilis egzistuoja ir sukurti jei reikia
+  async ensureUserProfile(userId: string, email: string, slapyvardis: string) {
     try {
-      console.log("Creating user profile manually for user:", userId)
+      console.log("Ensuring user profile exists for:", userId)
 
       // Pirmiausia patikrinti ar profilis jau egzistuoja
       const { data: existingProfile, error: checkError } = await supabase
         .from("vartotojai")
-        .select("id")
+        .select("*")
         .eq("id", userId)
         .single()
 
@@ -371,62 +307,32 @@ export const dbFunctions = {
         return { data: existingProfile, error: null }
       }
 
-      // Patikrinti ar vartotojas egzistuoja auth.users lentelėje
-      console.log("Checking if auth user exists...")
+      console.log("Profile doesn't exist, creating...")
 
-      // Bandyti sukurti profilį su retry logika
-      let attempts = 0
-      const maxAttempts = 3
+      // Bandyti sukurti profilį
+      const { data, error } = await supabase
+        .from("vartotojai")
+        .insert({
+          id: userId,
+          el_pastas: email,
+          slapyvardis: slapyvardis,
+        })
+        .select()
+        .single()
 
-      while (attempts < maxAttempts) {
-        try {
-          const { data, error } = await supabase
-            .from("vartotojai")
-            .insert({
-              id: userId,
-              el_pastas: email,
-              slapyvardis: slapyvardis,
-            })
-            .select()
-            .single()
-
-          if (error) {
-            if (error.message.includes("foreign key constraint")) {
-              attempts++
-              console.log(`Foreign key constraint error, attempt ${attempts}/${maxAttempts}`)
-
-              if (attempts >= maxAttempts) {
-                throw new Error("Nepavyko sukurti profilio - vartotojas dar neegzistuoja sistemoje")
-              }
-
-              // Palaukti ir bandyti dar kartą
-              await new Promise((resolve) => setTimeout(resolve, 2000))
-              continue
-            } else if (error.message.includes("duplicate key")) {
-              console.log("Profile already exists (duplicate key)")
-              // Gauti esamą profilį
-              const { data: existing } = await supabase.from("vartotojai").select("*").eq("id", userId).single()
-              return { data: existing, error: null }
-            } else {
-              throw error
-            }
-          }
-
-          console.log("Profile created successfully:", data)
-          return { data, error: null }
-        } catch (attemptError) {
-          attempts++
-          if (attempts >= maxAttempts) {
-            throw attemptError
-          }
-          console.log(`Profile creation attempt ${attempts} failed, retrying...`)
-          await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (error) {
+        if (error.message.includes("duplicate key")) {
+          // Profilis jau egzistuoja, gauti jį
+          const { data: existing } = await supabase.from("vartotojai").select("*").eq("id", userId).single()
+          return { data: existing, error: null }
         }
+        throw error
       }
 
-      throw new Error("Nepavyko sukurti profilio po kelių bandymų")
+      console.log("Profile created successfully")
+      return { data, error: null }
     } catch (error: any) {
-      console.error("CreateUserProfile function error:", error)
+      console.error("EnsureUserProfile error:", error)
       return { data: null, error: error }
     }
   },
@@ -551,12 +457,20 @@ export const dbFunctions = {
     }
   },
 
-  // Gauti vartotojo ūkį
+  // Gauti vartotojo ūkį ir sukurti jei reikia
   async getUserFarm(vartotojoId: string) {
     try {
       console.log("Getting farm for user:", vartotojoId)
 
-      // First check if any farm exists for this user
+      // Pirmiausia patikrinti ar profilis egzistuoja
+      const { data: profile } = await supabase.from("vartotojai").select("*").eq("id", vartotojoId).single()
+
+      if (!profile) {
+        console.log("User profile not found")
+        return { data: null, error: null }
+      }
+
+      // Ieškoti ūkio
       const { data: farms, error: checkError } = await supabase
         .from("ukiai")
         .select("*")
@@ -567,13 +481,13 @@ export const dbFunctions = {
         throw new Error(checkError.message || "Ūkio patikrinimo klaida")
       }
 
-      // If no farms exist, return null without error
+      // Jei ūkis neegzistuoja, grąžinti null
       if (!farms || farms.length === 0) {
         console.log("No farms found for user")
         return { data: null, error: null }
       }
 
-      // If multiple farms exist (shouldn't happen but just in case), use the first one
+      // Jei yra keletas ūkių, naudoti pirmą
       if (farms.length > 1) {
         console.warn("Multiple farms found for user, using the first one")
       }
@@ -602,6 +516,37 @@ export const dbFunctions = {
     } catch (error: any) {
       console.error("UpdateLastLogin function error:", error)
       return { error: error }
+    }
+  },
+
+  // Sukurti visą pradinę žaidimo struktūrą vartotojui
+  async initializeUserGame(userId: string, email: string, slapyvardis: string, ukioPavadinimas: string) {
+    try {
+      console.log("Initializing complete game structure for user:", userId)
+
+      // 1. Užtikrinti kad profilis egzistuoja
+      const { data: profile, error: profileError } = await this.ensureUserProfile(userId, email, slapyvardis)
+      if (profileError) {
+        console.log("Profile creation failed, but continuing...")
+      }
+
+      // 2. Sukurti ūkį
+      const { data: farm, error: farmError } = await this.createFarm(userId, ukioPavadinimas)
+      if (farmError || !farm) {
+        throw new Error("Nepavyko sukurti ūkio")
+      }
+
+      // 3. Sukurti pradinius išteklius
+      await this.createInitialResources(farm.id)
+
+      // 4. Sukurti pradinius pastatus
+      await this.createInitialBuildings(farm.id)
+
+      console.log("Game initialization completed successfully")
+      return { success: true, farm }
+    } catch (error: any) {
+      console.error("Game initialization error:", error)
+      return { success: false, error: error.message }
     }
   },
 

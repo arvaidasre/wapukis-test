@@ -11,7 +11,7 @@ import { PasswordStrength } from "@/components/auth/password-strength"
 import { useToast } from "@/components/ui/use-toast"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, AlertCircle, CheckCircle } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, CheckCircle } from "lucide-react"
 
 export default function AuthPage() {
   const { toast } = useToast()
@@ -102,9 +102,9 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Registracija su pataisytu klaidų valdymu
+  // Supaprastinta registracija
   const handleSignUp = async () => {
-    console.log("Starting registration process...")
+    console.log("Starting simplified registration process...")
 
     if (!validateForm(true)) {
       console.log("Form validation failed")
@@ -115,95 +115,62 @@ export default function AuthPage() {
     try {
       console.log("Attempting to register user with email:", formData.email)
 
-      // 1. Registruoti vartotoją
-      const { data, error } = await authFunctions.signUp(
+      // 1. Registruoti vartotoją - trigger turėtų sukurti profilį
+      const result = await authFunctions.signUp(
         formData.email,
         formData.password,
         formData.slapyvardis,
         formData.ukioPavadinimas,
       )
 
-      console.log("SignUp response:", { data, error })
+      console.log("SignUp result:", result)
 
-      if (error) {
-        throw error
+      if (result.error) {
+        throw result.error
       }
 
-      if (!data?.user) {
+      if (!result.data?.user) {
         throw new Error("Nepavyko sukurti vartotojo")
       }
 
-      console.log("User created successfully:", data.user.id)
+      // 2. Jei prisijungimas sėkmingas, sukurti žaidimo struktūrą
+      if (!result.needsConfirmation && result.data.user) {
+        console.log("User is signed in, initializing game...")
 
-      // 2. Palaukti ir patikrinti ar profilis egzistuoja
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-
-      // 3. Bandyti sukurti profilį rankiniu būdu jei reikia
-      try {
-        await dbFunctions.createUserProfile(data.user.id, formData.email, formData.slapyvardis)
-      } catch (profileError: any) {
-        console.log("Profile creation error (might already exist):", profileError)
-
-        // Jei profilio sukūrimas nepavyko dėl foreign key, tai normalu - trigger gali dar veikti
-        if (!profileError.message?.includes("foreign key constraint")) {
-          console.error("Unexpected profile creation error:", profileError)
-        }
-      }
-
-      // 4. Sukurti ūkį (tik jei prisijungimas sėkmingas)
-      const { user: currentUser } = await authFunctions.getCurrentUser()
-
-      if (currentUser) {
-        console.log("User is signed in, creating farm...")
-
-        const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
-          currentUser.id,
+        const gameInit = await dbFunctions.initializeUserGame(
+          result.data.user.id,
+          formData.email,
+          formData.slapyvardis,
           formData.ukioPavadinimas,
         )
 
-        if (ukisError) {
-          console.error("Farm creation error:", ukisError)
-          // Tęsti be ūkio - bus sukurtas vėliau
-        } else if (ukisData) {
-          console.log("Farm created, creating resources and buildings...")
-
-          // 5. Sukurti pradinius išteklius ir pastatus
-          await dbFunctions.createInitialResources(ukisData.id)
-          await dbFunctions.createInitialBuildings(ukisData.id)
+        if (!gameInit.success) {
+          console.log("Game initialization failed, but user is created:", gameInit.error)
+          // Tęsti - žaidimo struktūra bus sukurta vėliau
         }
+
+        toast({
+          title: "Registracija sėkminga! 🎉",
+          description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
+        })
+
+        router.push("/")
+      } else {
+        // Jei reikia patvirtinimo arba nepavyko prisijungti
+        toast({
+          title: "Registracija sėkminga! 📧",
+          description: result.message || "Prisijunkite su savo duomenimis.",
+        })
+
+        // Pereiti į prisijungimo skirtuką
+        setActiveTab("prisijungimas")
       }
-
-      console.log("Registration completed successfully!")
-
-      toast({
-        title: "Registracija sėkminga! 🎉",
-        description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
-      })
-
-      // 6. Nukreipti į žaidimą
-      router.push("/")
     } catch (error: any) {
       console.error("Registration error:", error)
 
-      let errorMessage = error.message || "Įvyko nežinoma klaida"
-
-      // Specifinės klaidos žinutės
-      if (error.message?.includes("foreign key constraint")) {
-        errorMessage = "Registracija vyksta... Bandykite prisijungti po kelių sekundžių."
-
-        // Automatiškai pereiti į prisijungimo skirtuką
-        setTimeout(() => {
-          setActiveTab("prisijungimas")
-          toast({
-            title: "Bandykite prisijungti",
-            description: "Jūsų paskyra gali būti sukurta. Bandykite prisijungti.",
-          })
-        }, 3000)
-      }
-
       toast({
         title: "Registracijos klaida",
-        description: errorMessage,
+        description: error.message || "Įvyko nežinoma klaida",
         variant: "destructive",
       })
     } finally {
@@ -211,7 +178,7 @@ export default function AuthPage() {
     }
   }
 
-  // Prisijungimas
+  // Prisijungimas su žaidimo inicializacija
   const handleSignIn = async () => {
     console.log("Starting sign in process...")
 
@@ -233,20 +200,46 @@ export default function AuthPage() {
       }
 
       if (data?.user) {
-        console.log("Sign in successful, updating last login...")
+        console.log("Sign in successful")
 
         // Atnaujinti paskutinį prisijungimą
         try {
           await dbFunctions.updateLastLogin(data.user.id)
         } catch (updateError) {
           console.log("Last login update error:", updateError)
-          // Tęsti be atnaujinimo
         }
 
-        toast({
-          title: "Prisijungimas sėkmingas! 🌾",
-          description: "Sveiki sugrįžę į savo ūkį!",
-        })
+        // Patikrinti ar vartotojas turi žaidimo struktūrą
+        const { data: farm } = await dbFunctions.getUserFarm(data.user.id)
+
+        if (!farm) {
+          console.log("No farm found, initializing game structure...")
+
+          // Sukurti žaidimo struktūrą
+          const gameInit = await dbFunctions.initializeUserGame(
+            data.user.id,
+            formData.email,
+            data.user.user_metadata?.slapyvardis || "Ūkininkas",
+            data.user.user_metadata?.ukio_pavadinimas || "Mano ūkis",
+          )
+
+          if (gameInit.success) {
+            toast({
+              title: "Prisijungimas sėkmingas! 🌾",
+              description: "Jūsų ūkis paruoštas žaidimui!",
+            })
+          } else {
+            toast({
+              title: "Prisijungimas sėkmingas! 🌾",
+              description: "Sveiki sugrįžę! Ūkis bus paruoštas automatiškai.",
+            })
+          }
+        } else {
+          toast({
+            title: "Prisijungimas sėkmingas! 🌾",
+            description: "Sveiki sugrįžę į savo ūkį!",
+          })
+        }
 
         router.push("/")
       } else {
@@ -319,22 +312,12 @@ export default function AuthPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Pranešimas apie konfigūraciją */}
-          <Alert className="mb-4 border-blue-200 bg-blue-50">
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>Pataisymas:</strong> Paleiskite naują SQL script'ą{" "}
-              <code>scripts/04-fix-foreign-key-timing.sql</code>
-              kad išspręstumėte foreign key problemas.
-            </AlertDescription>
-          </Alert>
-
-          {/* Demo režimo pranešimas */}
-          <Alert className="mb-4 border-amber-200 bg-amber-50">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              <strong>Pastaba:</strong> Jei registracija nepavyksta iš karto, palaukite kelias sekundes ir bandykite
-              prisijungti.
+          {/* Pranešimas apie supaprastintą procesą */}
+          <Alert className="mb-4 border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>Supaprastinta:</strong> Registracija dabar veikia automatiškai per trigger'ius. Jei registracija
+              nepavyksta, bandykite prisijungti.
             </AlertDescription>
           </Alert>
 
@@ -550,8 +533,8 @@ export default function AuthPage() {
 
               <Alert>
                 <AlertDescription className="text-sm">
-                  Registruodamiesi sutinkate su mūsų naudojimo sąlygomis ir privatumo politika. Po registracijos
-                  galėsite iš karto pradėti žaisti!
+                  Registruodamiesi sutinkate su mūsų naudojimo sąlygomis ir privatumo politika. Registracija vyksta
+                  automatiškai!
                 </AlertDescription>
               </Alert>
             </TabsContent>
