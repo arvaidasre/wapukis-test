@@ -102,7 +102,7 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Registracija su pataisytais stulpeliais
+  // Registracija su geresniu klaidų valdymu
   const handleSignUp = async () => {
     console.log("Starting registration process...")
 
@@ -308,7 +308,7 @@ export default function AuthPage() {
           <Alert className="mb-4 border-blue-200 bg-blue-50">
             <CheckCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Svarbu:</strong> Paleiskite naują SQL script'ą <code>scripts/03-fix-column-error.sql</code> ir
+              <strong>Svarbu:</strong> Paleiskite naują SQL script'ą <code>scripts/02-fix-registration.sql</code> ir
               išjunkite el. pašto patvirtinimą Supabase nustatymuose.
             </AlertDescription>
           </Alert>

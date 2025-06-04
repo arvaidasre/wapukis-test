@@ -48,6 +48,7 @@ function DidysisUkisContent() {
     initializeGame()
   }, [])
 
+  // Update the initializeGame function to handle the case where no farm exists yet
   const initializeGame = async () => {
     try {
       console.log("Initializing game...")
@@ -76,9 +77,55 @@ function DidysisUkisContent() {
       // Gauti vartotojo ūkį
       const { data: ukisData, error: ukisError } = await dbFunctions.getUserFarm(user.id)
 
-      if (ukisError || !ukisData) {
-        console.log("No farm found, using demo mode")
+      if (ukisError) {
+        console.error("Error getting farm:", ukisError)
         initializeDemoGame()
+        return
+      }
+
+      // If no farm exists, create one
+      if (!ukisData) {
+        console.log("No farm found, creating a new one")
+
+        // Create default farm name if user doesn't have one
+        const farmName = user.user_metadata?.ukio_pavadinimas || "Mano ūkis"
+
+        const { data: newFarm, error: createError } = await dbFunctions.createFarm(user.id, farmName)
+
+        if (createError || !newFarm) {
+          console.error("Failed to create farm:", createError)
+          initializeDemoGame()
+          return
+        }
+
+        console.log("New farm created:", newFarm)
+
+        // Create initial resources and buildings
+        await dbFunctions.createInitialResources(newFarm.id)
+        await dbFunctions.createInitialBuildings(newFarm.id)
+
+        setUkis(newFarm)
+
+        // Fetch the newly created resources and buildings
+        const { data: newIstekliai } = await dbFunctions.supabase
+          .from("istekliai")
+          .select("*")
+          .eq("ukio_id", newFarm.id)
+
+        if (newIstekliai) {
+          setIstekliai(newIstekliai)
+        }
+
+        const { data: newPastatai } = await dbFunctions.supabase.from("pastatai").select("*").eq("ukio_id", newFarm.id)
+
+        if (newPastatai) {
+          setPastatai(newPastatai)
+        }
+
+        setAugalai([])
+        setGyvunai([])
+
+        console.log("Game initialized with new farm")
         return
       }
 
@@ -118,7 +165,7 @@ function DidysisUkisContent() {
 
       console.log("Game initialized successfully with database")
     } catch (error) {
-      console.log("Game initialization error:", error)
+      console.error("Game initialization error:", error)
       console.log("Falling back to demo mode")
       initializeDemoGame()
     }

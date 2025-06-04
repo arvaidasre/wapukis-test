@@ -38,6 +38,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Fix the AuthGuard component to handle authentication errors better
   const checkAuth = async () => {
     try {
       console.log("Checking authentication...")
@@ -62,19 +63,25 @@ export function AuthGuard({ children }: AuthGuardProps) {
       }
 
       // Jei yra sesija, bandome gauti vartotoją
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser()
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
 
-      if (error || !user) {
-        console.log("No user found, showing demo option")
+        if (error || !user) {
+          console.log("No user found, showing demo option")
+          setAuthenticated(false)
+          setShowDemo(true)
+        } else {
+          console.log("User is authenticated:", user.id)
+          setAuthenticated(true)
+          setShowDemo(false)
+        }
+      } catch (userError) {
+        console.error("User fetch error:", userError)
         setAuthenticated(false)
         setShowDemo(true)
-      } else {
-        console.log("User is authenticated:", user.id)
-        setAuthenticated(true)
-        setShowDemo(false)
       }
     } catch (error) {
       console.error("Auth check error:", error)

@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Duomenų bazės tipai (atnaujinti be el_pasto_patvirtintas)
+// Duomenų bazės tipai
 export interface Vartotojas {
   id: string
   el_pastas: string
@@ -71,7 +71,7 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija su pataisytais stulpeliais
+  // Registracija su geresniu klaidų valdymu
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
       console.log("Starting signUp process...")
@@ -83,7 +83,7 @@ export const authFunctions = {
         await supabase.auth.signOut()
       }
 
-      // 2. Registruoti vartotoją
+      // 2. Registruoti vartotoją be automatinio trigger'io
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -108,6 +108,7 @@ export const authFunctions = {
         } else if (error.message.includes("Password")) {
           throw new Error("Slaptažodis neatitinka reikalavimų")
         } else if (error.message.includes("Database error")) {
+          // Bandyti be trigger'io
           console.log("Database trigger error, trying manual profile creation...")
         } else {
           throw new Error(error.message || "Registracijos klaida")
@@ -133,11 +134,12 @@ export const authFunctions = {
       if (profileError || !profileData) {
         console.log("Profile not found, creating manually...")
 
-        // Sukurti profilį rankiniu būdu (be el_pasto_patvirtintas)
+        // Sukurti profilį rankiniu būdu
         const { error: insertError } = await supabase.from("vartotojai").insert({
           id: data.user.id,
           el_pastas: email,
           slapyvardis: slapyvardis,
+          el_pasto_patvirtintas: true,
         })
 
         if (insertError) {
@@ -299,13 +301,22 @@ export const authFunctions = {
   },
 }
 
-// Duomenų bazės funkcijos su pataisytais stulpeliais
+// Duomenų bazės funkcijos su geresniu klaidų valdymu
 export const dbFunctions = {
-  // Sukurti vartotojo profilį rankiniu būdu (be el_pasto_patvirtintas)
+  // Update the createUserProfile function to handle missing columns
   async createUserProfile(userId: string, email: string, slapyvardis: string) {
     try {
       console.log("Creating user profile manually...")
 
+      // First check if the profile already exists
+      const { data: existingProfile } = await supabase.from("vartotojai").select("id").eq("id", userId).single()
+
+      if (existingProfile) {
+        console.log("Profile already exists")
+        return { data: existingProfile, error: null }
+      }
+
+      // Try to create profile with minimal fields to avoid column errors
       const { data, error } = await supabase
         .from("vartotojai")
         .insert({
@@ -452,14 +463,31 @@ export const dbFunctions = {
   // Gauti vartotojo ūkį
   async getUserFarm(vartotojoId: string) {
     try {
-      const { data, error } = await supabase.from("ukiai").select("*").eq("vartotojo_id", vartotojoId).single()
+      console.log("Getting farm for user:", vartotojoId)
 
-      if (error) {
-        console.error("Database getUserFarm error:", error)
-        throw new Error(error.message || "Ūkio gavimo klaida")
+      // First check if any farm exists for this user
+      const { data: farms, error: checkError } = await supabase
+        .from("ukiai")
+        .select("*")
+        .eq("vartotojo_id", vartotojoId)
+
+      if (checkError) {
+        console.error("Database check farms error:", checkError)
+        throw new Error(checkError.message || "Ūkio patikrinimo klaida")
       }
 
-      return { data, error: null }
+      // If no farms exist, return null without error
+      if (!farms || farms.length === 0) {
+        console.log("No farms found for user")
+        return { data: null, error: null }
+      }
+
+      // If multiple farms exist (shouldn't happen but just in case), use the first one
+      if (farms.length > 1) {
+        console.warn("Multiple farms found for user, using the first one")
+      }
+
+      return { data: farms[0], error: null }
     } catch (error: any) {
       console.error("GetUserFarm function error:", error)
       return { data: null, error: error }
@@ -485,7 +513,4 @@ export const dbFunctions = {
       return { error: error }
     }
   },
-
-  // Eksportuoti supabase objektą
-  supabase,
 }
