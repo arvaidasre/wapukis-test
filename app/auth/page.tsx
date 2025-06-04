@@ -41,9 +41,7 @@ export default function AuthPage() {
 
   const checkExistingAuth = async () => {
     try {
-      // Pirmiausia patikriname, ar yra aktyvi sesija
       const hasSession = await authFunctions.hasActiveSession()
-
       if (!hasSession) {
         console.log("No existing auth session")
         return
@@ -54,7 +52,6 @@ export default function AuthPage() {
         router.push("/")
       }
     } catch (error) {
-      // Vartotojas neprisijungęs, tęsti normaliai
       console.log("No existing auth session or error:", error)
     }
   }
@@ -74,8 +71,8 @@ export default function AuthPage() {
     // Slaptažodžio validacija
     if (!formData.password) {
       newErrors.password = "Slaptažodis yra privalomas"
-    } else if (isSignUp && formData.password.length < 8) {
-      newErrors.password = "Slaptažodis turi būti mažiausiai 8 simbolių"
+    } else if (isSignUp && formData.password.length < 6) {
+      newErrors.password = "Slaptažodis turi būti mažiausiai 6 simbolių"
     }
 
     if (isSignUp) {
@@ -91,8 +88,6 @@ export default function AuthPage() {
         newErrors.slapyvardis = "Slapyvardis yra privalomas"
       } else if (formData.slapyvardis.length < 3) {
         newErrors.slapyvardis = "Slapyvardis turi būti mažiausiai 3 simbolių"
-      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.slapyvardis)) {
-        newErrors.slapyvardis = "Slapyvardis gali turėti tik raides, skaičius ir pabraukimus"
       }
 
       // Ūkio pavadinimo validacija
@@ -135,12 +130,14 @@ export default function AuthPage() {
         let errorMessage = "Registracijos klaida"
 
         if (error.message) {
-          if (error.message.includes("already registered")) {
+          if (error.message.includes("already registered") || error.message.includes("already been registered")) {
             errorMessage = "Šis el. paštas jau užregistruotas"
           } else if (error.message.includes("Invalid email")) {
             errorMessage = "Neteisingas el. pašto formatas"
           } else if (error.message.includes("Password")) {
             errorMessage = "Slaptažodis neatitinka reikalavimų"
+          } else if (error.message.includes("weak")) {
+            errorMessage = "Slaptažodis per silpnas"
           } else {
             errorMessage = error.message
           }
@@ -150,21 +147,12 @@ export default function AuthPage() {
       }
 
       if (data?.user) {
-        console.log("User created successfully, creating profile...")
+        console.log("User created successfully:", data.user.id)
 
-        // Sukurti vartotojo profilį
-        const { error: profileError } = await dbFunctions.createUserProfile(
-          data.user.id,
-          formData.email,
-          formData.slapyvardis,
-        )
+        // Palaukti truputį, kad trigger'is sukurtų profilį
+        await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        if (profileError) {
-          console.error("Profile creation error:", profileError)
-          throw new Error("Nepavyko sukurti vartotojo profilio: " + profileError.message)
-        }
-
-        console.log("Profile created, creating farm...")
+        console.log("Creating farm...")
 
         // Sukurti ūkį
         const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
@@ -339,12 +327,12 @@ export default function AuthPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Pranešimas apie el. pašto patvirtinimą */}
-          <Alert className="mb-4 border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              <strong>Geros žinios!</strong> El. pašto patvirtinimas išjungtas - galite iš karto pradėti žaisti po
-              registracijos.
+          {/* Pranešimas apie konfigūraciją */}
+          <Alert className="mb-4 border-blue-200 bg-blue-50">
+            <CheckCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>Svarbu:</strong> Prieš registraciją paleiskite SQL script'ą Supabase duomenų bazėje ir išjunkite
+              el. pašto patvirtinimą.
             </AlertDescription>
           </Alert>
 

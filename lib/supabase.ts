@@ -71,9 +71,11 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija be el. pašto patvirtinimo
+  // Registracija
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
+      console.log("Starting signUp process...")
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -82,10 +84,10 @@ export const authFunctions = {
             slapyvardis,
             ukio_pavadinimas: ukioPavadinimas,
           },
-          // Išjungti el. pašto patvirtinimą
-          emailRedirectTo: undefined,
         },
       })
+
+      console.log("SignUp response:", { data, error })
 
       if (error) {
         console.error("Supabase signUp error:", error)
@@ -172,13 +174,11 @@ export const authFunctions = {
     }
   },
 
-  // Gauti dabartinį vartotoją - patobulinta versija
+  // Gauti dabartinį vartotoją
   async getCurrentUser() {
     try {
-      // Pirmiausia patikriname, ar yra sesija
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
 
-      // Jei yra sesijos klaida arba nėra sesijos, grąžiname null be klaidos
       if (sessionError) {
         console.log("Session error:", sessionError.message)
         return { user: null, error: null }
@@ -189,7 +189,6 @@ export const authFunctions = {
         return { user: null, error: null }
       }
 
-      // Jei yra sesija, bandome gauti vartotoją
       const {
         data: { user },
         error,
@@ -197,14 +196,12 @@ export const authFunctions = {
 
       if (error) {
         console.log("User fetch error:", error.message)
-        // Net jei yra klaida gaunant vartotoją, negrąžiname klaidos
         return { user: null, error: null }
       }
 
       return { user, error: null }
     } catch (error: any) {
       console.log("GetCurrentUser function error:", error.message)
-      // Visais atvejais grąžiname null be klaidos, kad nesutrukdytų demo režimui
       return { user: null, error: null }
     }
   },
@@ -228,45 +225,11 @@ export const authFunctions = {
 
 // Duomenų bazės funkcijos
 export const dbFunctions = {
-  // Sukurti vartotojo profilį
-  async createUserProfile(userId: string, email: string, slapyvardis: string) {
-    try {
-      // Pirmiausia patikrinti ar vartotojas jau egzistuoja
-      const { data: existingUser } = await supabase.from("vartotojai").select("id").eq("id", userId).single()
-
-      if (existingUser) {
-        console.log("User profile already exists")
-        return { data: existingUser, error: null }
-      }
-
-      const { data, error } = await supabase
-        .from("vartotojai")
-        .insert([
-          {
-            id: userId,
-            el_pastas: email,
-            slapyvardis,
-            el_pasto_patvirtintas: true, // Automatiškai patvirtinti el. paštą
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Database createUserProfile error:", error)
-        throw new Error(error.message || "Vartotojo profilio sukūrimo klaida")
-      }
-
-      return { data, error: null }
-    } catch (error: any) {
-      console.error("CreateUserProfile function error:", error)
-      return { data: null, error: error }
-    }
-  },
-
-  // Sukurti ūkį
+  // Sukurti ūkį (profilis sukuriamas automatiškai per trigger'į)
   async createFarm(vartotojoId: string, pavadinimas: string) {
     try {
+      console.log("Creating farm for user:", vartotojoId)
+
       // Patikrinti ar ūkis jau egzistuoja
       const { data: existingFarm } = await supabase.from("ukiai").select("id").eq("vartotojo_id", vartotojoId).single()
 
@@ -291,6 +254,7 @@ export const dbFunctions = {
         throw new Error(error.message || "Ūkio sukūrimo klaida")
       }
 
+      console.log("Farm created successfully:", data)
       return { data, error: null }
     } catch (error: any) {
       console.error("CreateFarm function error:", error)
@@ -301,6 +265,8 @@ export const dbFunctions = {
   // Sukurti pradinius išteklius
   async createInitialResources(ukioId: string) {
     try {
+      console.log("Creating initial resources for farm:", ukioId)
+
       // Patikrinti ar ištekliai jau egzistuoja
       const { data: existingResources } = await supabase.from("istekliai").select("id").eq("ukio_id", ukioId).limit(1)
 
@@ -324,6 +290,7 @@ export const dbFunctions = {
         throw new Error(error.message || "Pradinių išteklių sukūrimo klaida")
       }
 
+      console.log("Initial resources created successfully")
       return { data, error: null }
     } catch (error: any) {
       console.error("CreateInitialResources function error:", error)
@@ -334,6 +301,8 @@ export const dbFunctions = {
   // Sukurti pradinius pastatus
   async createInitialBuildings(ukioId: string) {
     try {
+      console.log("Creating initial buildings for farm:", ukioId)
+
       // Patikrinti ar pastatai jau egzistuoja
       const { data: existingBuildings } = await supabase.from("pastatai").select("id").eq("ukio_id", ukioId).limit(1)
 
@@ -368,6 +337,7 @@ export const dbFunctions = {
         throw new Error(error.message || "Pradinių pastatų sukūrimo klaida")
       }
 
+      console.log("Initial buildings created successfully")
       return { data, error: null }
     } catch (error: any) {
       console.error("CreateInitialBuildings function error:", error)
@@ -412,6 +382,6 @@ export const dbFunctions = {
     }
   },
 
-  // Pridėti supabase objektą, kad galėtume jį naudoti kitose vietose
+  // Pridėti supabase objektą
   supabase,
 }
