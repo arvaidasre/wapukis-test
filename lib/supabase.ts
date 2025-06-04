@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Duomenų bazės tipai
+// Duomenų bazės tipai (atnaujinti be el_pasto_patvirtintas)
 export interface Vartotojas {
   id: string
   el_pastas: string
@@ -71,7 +71,7 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija su geresniu klaidų valdymu
+  // Registracija su pataisytais stulpeliais
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
       console.log("Starting signUp process...")
@@ -83,7 +83,7 @@ export const authFunctions = {
         await supabase.auth.signOut()
       }
 
-      // 2. Registruoti vartotoją be automatinio trigger'io
+      // 2. Registruoti vartotoją
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -108,7 +108,6 @@ export const authFunctions = {
         } else if (error.message.includes("Password")) {
           throw new Error("Slaptažodis neatitinka reikalavimų")
         } else if (error.message.includes("Database error")) {
-          // Bandyti be trigger'io
           console.log("Database trigger error, trying manual profile creation...")
         } else {
           throw new Error(error.message || "Registracijos klaida")
@@ -134,12 +133,11 @@ export const authFunctions = {
       if (profileError || !profileData) {
         console.log("Profile not found, creating manually...")
 
-        // Sukurti profilį rankiniu būdu
+        // Sukurti profilį rankiniu būdu (be el_pasto_patvirtintas)
         const { error: insertError } = await supabase.from("vartotojai").insert({
           id: data.user.id,
           el_pastas: email,
           slapyvardis: slapyvardis,
-          el_pasto_patvirtintas: true,
         })
 
         if (insertError) {
@@ -301,9 +299,9 @@ export const authFunctions = {
   },
 }
 
-// Duomenų bazės funkcijos su geresniu klaidų valdymu
+// Duomenų bazės funkcijos su pataisytais stulpeliais
 export const dbFunctions = {
-  // Sukurti vartotojo profilį rankiniu būdu
+  // Sukurti vartotojo profilį rankiniu būdu (be el_pasto_patvirtintas)
   async createUserProfile(userId: string, email: string, slapyvardis: string) {
     try {
       console.log("Creating user profile manually...")
@@ -314,7 +312,6 @@ export const dbFunctions = {
           id: userId,
           el_pastas: email,
           slapyvardis: slapyvardis,
-          el_pasto_patvirtintas: true,
         })
         .select()
         .single()
@@ -488,4 +485,7 @@ export const dbFunctions = {
       return { error: error }
     }
   },
+
+  // Eksportuoti supabase objektą
+  supabase,
 }
