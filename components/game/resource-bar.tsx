@@ -1,8 +1,12 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { TooltipIcon } from "@/components/ui/tooltip-icon"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
 import type { Isteklius } from "@/lib/supabase"
-import { Coins, Wheat, Apple, Milk, Egg, Beef } from "lucide-react"
+import { Coins, Wheat, Apple, Milk, Egg, Beef, Star } from "lucide-react"
+import { motion } from "framer-motion"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 interface ResourceBarProps {
   istekliai: Isteklius[]
@@ -19,11 +23,11 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
 
   const getResourceIcon = (tipas: string) => {
     const icons = {
-      grudai: <Wheat className="h-4 w-4 text-amber-600" />,
-      vaisiai: <Apple className="h-4 w-4 text-red-500" />,
-      pienas: <Milk className="h-4 w-4 text-blue-500" />,
-      kiausiniai: <Egg className="h-4 w-4 text-yellow-500" />,
-      mesa: <Beef className="h-4 w-4 text-red-700" />,
+      grudai: <Wheat className="h-5 w-5 text-amber-600" />,
+      vaisiai: <Apple className="h-5 w-5 text-red-500" />,
+      pienas: <Milk className="h-5 w-5 text-blue-500" />,
+      kiausiniai: <Egg className="h-5 w-5 text-yellow-500" />,
+      mesa: <Beef className="h-5 w-5 text-red-700" />,
     }
     return icons[tipas as keyof typeof icons] || null
   }
@@ -31,39 +35,86 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
   const patirtisKitamLygiui = lygis * 100
   const patirtisProgresas = ((patirtis % patirtisKitamLygiui) / patirtisKitamLygiui) * 100
 
+  const resourceTypes = ["grudai", "vaisiai", "pienas", "kiausiniai", "mesa"]
+  const resourceNames = {
+    grudai: "Grūdai",
+    vaisiai: "Vaisiai",
+    pienas: "Pienas",
+    kiausiniai: "Kiaušiniai",
+    mesa: "Mėsa",
+  }
+
   return (
-    <Card className="mb-4">
-      <CardContent className="p-3">
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          {/* Pinigai ir lygis */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <Coins className="h-4 w-4 text-yellow-500" />
-              <span className="font-semibold">{pinigai.toLocaleString()}</span>
-            </div>
+    <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+      <TooltipProvider>
+        <Card className="mb-4 overflow-hidden border-none shadow-md">
+          <CardContent className="p-0">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-3">
+              <div className="flex flex-wrap gap-4 items-center justify-between">
+                {/* Pinigai ir lygis */}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm">
+                    <Coins className="h-5 w-5 text-yellow-500" />
+                    <AnimatedCounter
+                      value={pinigai}
+                      className="font-semibold"
+                      formatValue={(val) => val.toLocaleString()}
+                    />
+                  </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Lygis {lygis}</span>
-              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${patirtisProgresas}%` }}
-                />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <TooltipIcon
+                        icon={
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-semibold shadow-sm">
+                            {lygis}
+                          </div>
+                        }
+                        content={
+                          <div className="text-center">
+                            <div className="font-semibold mb-1">Ūkininko lygis</div>
+                            <div className="text-xs">
+                              Patirtis: {patirtis} / {patirtisKitamLygiui}
+                            </div>
+                          </div>
+                        }
+                      />
+                      <Star className="h-4 w-4 text-yellow-500" />
+                    </div>
+                    <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
+                        style={{ width: `${patirtisProgresas}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ištekliai */}
+                <div className="flex gap-3 flex-wrap justify-end">
+                  {resourceTypes.map((tipas) => (
+                    <TooltipIcon
+                      key={tipas}
+                      icon={
+                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-full shadow-sm">
+                          {getResourceIcon(tipas)}
+                          <AnimatedCounter value={getResourceAmount(tipas)} className="text-sm font-medium" />
+                        </div>
+                      }
+                      content={
+                        <div>
+                          <div className="font-semibold">{resourceNames[tipas as keyof typeof resourceNames]}</div>
+                          <div className="text-xs">Turimas kiekis: {getResourceAmount(tipas)}</div>
+                        </div>
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Ištekliai */}
-          <div className="flex gap-4">
-            {["grudai", "vaisiai", "pienas", "kiausiniai", "mesa"].map((tipas) => (
-              <div key={tipas} className="flex items-center gap-1">
-                {getResourceIcon(tipas)}
-                <span className="text-sm">{getResourceAmount(tipas)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </TooltipProvider>
+    </motion.div>
   )
 }

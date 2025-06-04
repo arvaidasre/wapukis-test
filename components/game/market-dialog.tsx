@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
+import { motion } from "framer-motion"
 import type { Isteklius } from "@/lib/supabase"
 import { RINKOS_KAINOS } from "@/lib/game-data"
 import { useToast } from "@/components/ui/use-toast"
+import { Store, TrendingUp, TrendingDown } from "lucide-react"
 
 interface MarketDialogProps {
   open: boolean
@@ -97,131 +100,149 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-to-b from-white to-green-50 dark:from-gray-950 dark:to-green-950 border-none shadow-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">🏪</span>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900 dark:to-yellow-900 rounded-full">
+              <Store className="h-6 w-6 text-amber-600" />
+            </div>
             Rinka
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="pirkti" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="pirkti">Pirkti</TabsTrigger>
-            <TabsTrigger value="parduoti">Parduoti</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-amber-100/50 dark:bg-amber-900/20">
+            <TabsTrigger value="pirkti" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+              <TrendingDown className="h-4 w-4 mr-2" />
+              Pirkti
+            </TabsTrigger>
+            <TabsTrigger value="parduoti" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Parduoti
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pirkti" className="space-y-4">
+          <TabsContent value="pirkti" className="space-y-4 mt-4">
             <div className="grid gap-4">
-              {Object.entries(RINKOS_KAINOS).map(([tipas, kainos]) => (
-                <Card key={tipas}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <span className="text-xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
-                      {resourceNames[tipas as keyof typeof resourceNames]}
-                      <span className="text-sm font-normal text-gray-500">({kainos.pirkimo} 💰 už vienetą)</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label htmlFor={`buy-${tipas}`}>Kiekis:</Label>
-                        <Input
-                          id={`buy-${tipas}`}
-                          type="number"
-                          min="0"
-                          value={quantities[`buy-${tipas}`] || ""}
-                          onChange={(e) =>
-                            setQuantities((prev) => ({
-                              ...prev,
-                              [`buy-${tipas}`]: Number.parseInt(e.target.value) || 0,
-                            }))
-                          }
-                          placeholder="0"
-                        />
+              {Object.entries(RINKOS_KAINOS).map(([tipas, kainos], index) => (
+                <motion.div
+                  key={tipas}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card className="overflow-hidden border-none shadow-md">
+                    <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                        {resourceNames[tipas as keyof typeof resourceNames]}
+                        <span className="text-sm font-normal text-amber-600 dark:text-amber-400">
+                          ({kainos.pirkimo} 💰 už vienetą)
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 p-4 bg-white dark:bg-gray-800">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label htmlFor={`buy-${tipas}`}>Kiekis:</Label>
+                          <Input
+                            id={`buy-${tipas}`}
+                            type="number"
+                            min="0"
+                            value={quantities[`buy-${tipas}`] || ""}
+                            onChange={(e) =>
+                              setQuantities((prev) => ({
+                                ...prev,
+                                [`buy-${tipas}`]: Number.parseInt(e.target.value) || 0,
+                              }))
+                            }
+                            placeholder="0"
+                            className="bg-white dark:bg-gray-900"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-end">
+                          <Button
+                            onClick={() => handleBuy(tipas)}
+                            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                          >
+                            Pirkti už{" "}
+                            <AnimatedCounter
+                              value={(quantities[`buy-${tipas}`] || 0) * kainos.pirkimo}
+                              className="ml-1"
+                            />{" "}
+                            💰
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex flex-col justify-end">
-                        <Button onClick={() => handleBuy(tipas)}>
-                          Pirkti už {(quantities[`buy-${tipas}`] || 0) * kainos.pirkimo} 💰
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="parduoti" className="space-y-4">
+          <TabsContent value="parduoti" className="space-y-4 mt-4">
             <div className="grid gap-4">
-              {Object.entries(RINKOS_KAINOS).map(([tipas, kainos]) => {
+              {Object.entries(RINKOS_KAINOS).map(([tipas, kainos], index) => {
                 const turimas = getResourceAmount(tipas)
 
                 return (
-                  <Card key={tipas}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <span className="text-xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
-                        {resourceNames[tipas as keyof typeof resourceNames]}
-                        <span className="text-sm font-normal text-gray-500">({kainos.pardavimo} 💰 už vienetą)</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="text-sm text-gray-600">Turite: {turimas} vienetų</div>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Label htmlFor={`sell-${tipas}`}>Kiekis:</Label>
-                          <Input
-                            id={`sell-${tipas}`}
-                            type="number"
-                            min="0"
-                            max={turimas}
-                            value={quantities[`sell-${tipas}`] || ""}
-                            onChange={(e) =>
-                              setQuantities((prev) => ({
-                                ...prev,
-                                [`sell-${tipas}`]: Number.parseInt(e.target.value) || 0,
-                              }))
-                            }
-                            placeholder="0"
-                          />
+                  <motion.div
+                    key={tipas}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <Card className="overflow-hidden border-none shadow-md">
+                      <CardHeader className="pb-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                          {resourceNames[tipas as keyof typeof resourceNames]}
+                          <span className="text-sm font-normal text-green-600 dark:text-green-400">
+                            ({kainos.pardavimo} 💰 už vienetą)
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3 p-4 bg-white dark:bg-gray-800">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Turite: {turimas} vienetų</div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Label htmlFor={`sell-${tipas}`}>Kiekis:</Label>
+                            <Input
+                              id={`sell-${tipas}`}
+                              type="number"
+                              min="0"
+                              max={turimas}
+                              value={quantities[`sell-${tipas}`] || ""}
+                              onChange={(e) =>
+                                setQuantities((prev) => ({
+                                  ...prev,
+                                  [`sell-${tipas}`]: Math.min(Number.parseInt(e.target.value) || 0, turimas),
+                                }))
+                              }
+                              placeholder="0"
+                              className="bg-white dark:bg-gray-900"
+                              disabled={turimas === 0}
+                            />
+                          </div>
+                          <div className="flex flex-col justify-end">
+                            <Button
+                              onClick={() => handleSell(tipas)}
+                              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                              disabled={turimas === 0 || !quantities[`sell-${tipas}`]}
+                            >
+                              Parduoti už{" "}
+                              <AnimatedCounter
+                                value={(quantities[`sell-${tipas}`] || 0) * kainos.pardavimo}
+                                className="ml-1"
+                              />{" "}
+                              💰
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex flex-col justify-end">
-                          <Button onClick={() => handleSell(tipas)} disabled={turimas === 0}>
-                            Parduoti už {(quantities[`sell-${tipas}`] || 0) * kainos.pardavimo} 💰
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setQuantities((prev) => ({
-                              ...prev,
-                              [`sell-${tipas}`]: Math.floor(turimas / 2),
-                            }))
-                          }
-                          disabled={turimas === 0}
-                        >
-                          Pusė
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setQuantities((prev) => ({
-                              ...prev,
-                              [`sell-${tipas}`]: turimas,
-                            }))
-                          }
-                          disabled={turimas === 0}
-                        >
-                          Visus
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 )
               })}
             </div>

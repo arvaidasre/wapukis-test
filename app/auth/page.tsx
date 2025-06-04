@@ -11,7 +11,7 @@ import { PasswordStrength } from "@/components/auth/password-strength"
 import { useToast } from "@/components/ui/use-toast"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { Loader2, Eye, EyeOff, Mail, Lock, User, Home } from "lucide-react"
+import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, AlertCircle } from "lucide-react"
 
 export default function AuthPage() {
   const { toast } = useToast()
@@ -47,6 +47,7 @@ export default function AuthPage() {
       }
     } catch (error) {
       // Vartotojas neprisijungęs, tęsti normaliai
+      console.log("No existing auth session")
     }
   }
 
@@ -100,10 +101,17 @@ export default function AuthPage() {
 
   // Registracija
   const handleSignUp = async () => {
-    if (!validateForm(true)) return
+    console.log("Starting registration process...")
+
+    if (!validateForm(true)) {
+      console.log("Form validation failed")
+      return
+    }
 
     setLoading(true)
     try {
+      console.log("Attempting to register user with email:", formData.email)
+
       // Registruoti vartotoją
       const { data, error } = await authFunctions.signUp(
         formData.email,
@@ -112,14 +120,30 @@ export default function AuthPage() {
         formData.ukioPavadinimas,
       )
 
+      console.log("SignUp response:", { data, error })
+
       if (error) {
-        if (error.message.includes("already registered")) {
-          throw new Error("Šis el. paštas jau užregistruotas")
+        console.error("SignUp error:", error)
+        let errorMessage = "Registracijos klaida"
+
+        if (error.message) {
+          if (error.message.includes("already registered")) {
+            errorMessage = "Šis el. paštas jau užregistruotas"
+          } else if (error.message.includes("Invalid email")) {
+            errorMessage = "Neteisingas el. pašto formatas"
+          } else if (error.message.includes("Password")) {
+            errorMessage = "Slaptažodis neatitinka reikalavimų"
+          } else {
+            errorMessage = error.message
+          }
         }
-        throw error
+
+        throw new Error(errorMessage)
       }
 
-      if (data.user) {
+      if (data?.user) {
+        console.log("User created successfully, creating profile...")
+
         // Sukurti vartotojo profilį
         const { error: profileError } = await dbFunctions.createUserProfile(
           data.user.id,
@@ -127,7 +151,12 @@ export default function AuthPage() {
           formData.slapyvardis,
         )
 
-        if (profileError) throw profileError
+        if (profileError) {
+          console.error("Profile creation error:", profileError)
+          throw new Error("Nepavyko sukurti vartotojo profilio: " + profileError.message)
+        }
+
+        console.log("Profile created, creating farm...")
 
         // Sukurti ūkį
         const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
@@ -135,15 +164,34 @@ export default function AuthPage() {
           formData.ukioPavadinimas,
         )
 
-        if (ukisError) throw ukisError
+        if (ukisError) {
+          console.error("Farm creation error:", ukisError)
+          throw new Error("Nepavyko sukurti ūkio: " + ukisError.message)
+        }
+
+        if (!ukisData) {
+          throw new Error("Ūkio duomenys negauti")
+        }
+
+        console.log("Farm created, creating resources...")
 
         // Sukurti pradinius išteklius
         const { error: istekliaiError } = await dbFunctions.createInitialResources(ukisData.id)
-        if (istekliaiError) throw istekliaiError
+        if (istekliaiError) {
+          console.error("Resources creation error:", istekliaiError)
+          throw new Error("Nepavyko sukurti pradinių išteklių: " + istekliaiError.message)
+        }
+
+        console.log("Resources created, creating buildings...")
 
         // Sukurti pradinius pastatus
         const { error: pastataiError } = await dbFunctions.createInitialBuildings(ukisData.id)
-        if (pastataiError) throw pastataiError
+        if (pastataiError) {
+          console.error("Buildings creation error:", pastataiError)
+          throw new Error("Nepavyko sukurti pradinių pastatų: " + pastataiError.message)
+        }
+
+        console.log("Registration completed successfully!")
 
         toast({
           title: "Registracija sėkminga! 🎉",
@@ -153,6 +201,8 @@ export default function AuthPage() {
         // Pereiti į prisijungimo skirtuką
         setActiveTab("prisijungimas")
         setFormData((prev) => ({ ...prev, password: "", confirmPassword: "" }))
+      } else {
+        throw new Error("Nepavyko sukurti vartotojo")
       }
     } catch (error: any) {
       console.error("Registration error:", error)
@@ -168,23 +218,41 @@ export default function AuthPage() {
 
   // Prisijungimas
   const handleSignIn = async () => {
-    if (!validateForm(false)) return
+    console.log("Starting sign in process...")
+
+    if (!validateForm(false)) {
+      console.log("Form validation failed")
+      return
+    }
 
     setLoading(true)
     try {
+      console.log("Attempting to sign in user with email:", formData.email)
+
       const { data, error } = await authFunctions.signIn(formData.email, formData.password)
 
+      console.log("SignIn response:", { data, error })
+
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Neteisingas el. paštas arba slaptažodis")
+        console.error("SignIn error:", error)
+        let errorMessage = "Prisijungimo klaida"
+
+        if (error.message) {
+          if (error.message.includes("Invalid login credentials")) {
+            errorMessage = "Neteisingas el. paštas arba slaptažodis"
+          } else if (error.message.includes("Email not confirmed")) {
+            errorMessage = "Patvirtinkite el. paštą prieš prisijungiant"
+          } else {
+            errorMessage = error.message
+          }
         }
-        if (error.message.includes("Email not confirmed")) {
-          throw new Error("Patvirtinkite el. paštą prieš prisijungiant")
-        }
-        throw error
+
+        throw new Error(errorMessage)
       }
 
-      if (data.user) {
+      if (data?.user) {
+        console.log("Sign in successful, updating last login...")
+
         // Atnaujinti paskutinį prisijungimą
         await dbFunctions.updateLastLogin(data.user.id)
 
@@ -194,6 +262,8 @@ export default function AuthPage() {
         })
 
         router.push("/")
+      } else {
+        throw new Error("Nepavyko prisijungti")
       }
     } catch (error: any) {
       console.error("Sign in error:", error)
@@ -262,6 +332,15 @@ export default function AuthPage() {
         </CardHeader>
 
         <CardContent>
+          {/* Demo režimo pranešimas */}
+          <Alert className="mb-4 border-amber-200 bg-amber-50">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Demo režimas:</strong> Jei neturite Supabase duomenų bazės, galite naudoti demo versiją be
+              registracijos.
+            </AlertDescription>
+          </Alert>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="prisijungimas">Prisijungimas</TabsTrigger>
@@ -331,9 +410,13 @@ export default function AuthPage() {
                 )}
               </Button>
 
-              <div className="text-center">
+              <div className="text-center space-y-2">
                 <Button variant="link" className="text-sm text-green-600" onClick={() => setActiveTab("atkurimas")}>
                   Pamiršote slaptažodį?
+                </Button>
+                <div className="text-sm text-gray-500">arba</div>
+                <Button variant="outline" className="w-full" onClick={() => router.push("/")}>
+                  Tęsti demo režimu
                 </Button>
               </div>
             </TabsContent>

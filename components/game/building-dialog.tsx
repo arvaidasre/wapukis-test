@@ -8,9 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
+import { motion, AnimatePresence } from "framer-motion"
 import type { Pastatas, Augalas, Gyvunas } from "@/lib/supabase"
 import { AUGALU_TIPAI, GYVUNU_TIPAI, PASTATU_TIPAI } from "@/lib/game-data"
 import { useToast } from "@/components/ui/use-toast"
+import { ArrowUpCircle, Leaf, Tractor, Warehouse, Home } from "lucide-react"
 
 interface BuildingDialogProps {
   pastatas: Pastatas | null
@@ -136,31 +139,67 @@ export function BuildingDialog({
     return praejusLaikas >= gyvunoTipas.maisinimo_intervalas
   }
 
+  const getBuildingIcon = () => {
+    switch (pastatas.tipas) {
+      case "laukas":
+        return <Leaf className="h-6 w-6 text-green-500" />
+      case "tvartas":
+        return <Warehouse className="h-6 w-6 text-amber-600" />
+      case "namas":
+        return <Home className="h-6 w-6 text-blue-500" />
+      case "sandelis":
+        return <Warehouse className="h-6 w-6 text-gray-500" />
+      default:
+        return <Tractor className="h-6 w-6 text-green-500" />
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-gradient-to-b from-white to-green-50 dark:from-gray-950 dark:to-green-950 border-none shadow-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">{pastatoTipas?.ikona}</span>
-            {pastatoTipas?.pavadinimas}
-            <Badge variant="secondary">Lygis {pastatas.lygis}</Badge>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-1.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-full">
+              {getBuildingIcon()}
+            </div>
+            <div className="flex items-center gap-2">
+              {pastatoTipas?.pavadinimas}
+              <Badge
+                variant="secondary"
+                className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900"
+              >
+                Lygis {pastatas.lygis}
+              </Badge>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="veiksmai" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="veiksmai">Veiksmai</TabsTrigger>
-            <TabsTrigger value="atnaujinimas">Atnaujinimas</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-green-100/50 dark:bg-green-900/20">
+            <TabsTrigger value="veiksmai" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+              Veiksmai
+            </TabsTrigger>
+            <TabsTrigger
+              value="atnaujinimas"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+            >
+              Atnaujinimas
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="veiksmai" className="space-y-4">
+          <TabsContent value="veiksmai" className="space-y-4 mt-4">
             {pastatas.tipas === "laukas" && (
               <div className="space-y-4">
                 {laukoAugalai.length === 0 ? (
-                  <div className="space-y-3">
+                  <motion.div
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     <Label>Pasirinkite augalą sodinimui:</Label>
                     <Select value={selectedCrop} onValueChange={setSelectedCrop}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white dark:bg-gray-800">
                         <SelectValue placeholder="Pasirinkite augalą" />
                       </SelectTrigger>
                       <SelectContent>
@@ -175,44 +214,72 @@ export function BuildingDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button onClick={handlePlantCrop} className="w-full">
+                    <Button
+                      onClick={handlePlantCrop}
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                    >
                       Sodinti
                     </Button>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <div className="space-y-3">
-                    {laukoAugalai.map((augalas) => {
-                      const augaloTipas = AUGALU_TIPAI[augalas.tipas as keyof typeof AUGALU_TIPAI]
-                      const paruostas = isHarvestReady(augalas)
+                  <motion.div
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AnimatePresence>
+                      {laukoAugalai.map((augalas) => {
+                        const augaloTipas = AUGALU_TIPAI[augalas.tipas as keyof typeof AUGALU_TIPAI]
+                        const paruostas = isHarvestReady(augalas)
 
-                      return (
-                        <div key={augalas.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{augaloTipas.ikona}</span>
-                            <div>
-                              <div className="font-medium">{augaloTipas.pavadinimas}</div>
-                              <div className="text-sm text-gray-500">{paruostas ? "Paruošta derliui!" : "Auga..."}</div>
+                        return (
+                          <motion.div
+                            key={augalas.id}
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="text-2xl">{augaloTipas.ikona}</div>
+                              <div>
+                                <div className="font-medium">{augaloTipas.pavadinimas}</div>
+                                <div className="text-sm text-gray-500">
+                                  {paruostas ? "Paruošta derliui!" : "Auga..."}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          {paruostas && (
-                            <Button size="sm" onClick={() => onHarvestCrop(augalas.id)}>
-                              Nuimti derlių
-                            </Button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                            {paruostas && (
+                              <Button
+                                size="sm"
+                                onClick={() => onHarvestCrop(augalas.id)}
+                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                              >
+                                Nuimti derlių
+                              </Button>
+                            )}
+                          </motion.div>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </motion.div>
                 )}
               </div>
             )}
 
             {pastatas.tipas === "tvartas" && (
               <div className="space-y-4">
-                <div className="space-y-3">
+                <motion.div
+                  className="space-y-3"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <Label>Pirkti gyvūną:</Label>
                   <Select value={selectedAnimal} onValueChange={setSelectedAnimal}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white dark:bg-gray-800">
                       <SelectValue placeholder="Pasirinkite gyvūną" />
                     </SelectTrigger>
                     <SelectContent>
@@ -235,73 +302,119 @@ export function BuildingDialog({
                       value={animalName}
                       onChange={(e) => setAnimalName(e.target.value)}
                       placeholder="Įveskite vardą"
+                      className="bg-white dark:bg-gray-800"
                     />
                   </div>
 
-                  <Button onClick={handleBuyAnimal} className="w-full">
+                  <Button
+                    onClick={handleBuyAnimal}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  >
                     Pirkti gyvūną
                   </Button>
-                </div>
+                </motion.div>
 
                 {tvartoGyvunai.length > 0 && (
-                  <div className="space-y-3">
+                  <motion.div
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
                     <Label>
                       Tvartas ({tvartoGyvunai.length}/{PASTATU_TIPAI.tvartas.talpa(pastatas.lygis)}):
                     </Label>
-                    {tvartoGyvunai.map((gyvunas) => {
-                      const gyvunoTipas = GYVUNU_TIPAI[gyvunas.tipas as keyof typeof GYVUNU_TIPAI]
-                      const galimaMaitinti = canFeedAnimal(gyvunas)
+                    <AnimatePresence>
+                      {tvartoGyvunai.map((gyvunas) => {
+                        const gyvunoTipas = GYVUNU_TIPAI[gyvunas.tipas as keyof typeof GYVUNU_TIPAI]
+                        const galimaMaitinti = canFeedAnimal(gyvunas)
 
-                      return (
-                        <div key={gyvunas.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">{gyvunoTipas.ikona}</span>
-                            <div>
-                              <div className="font-medium">{gyvunas.vardas}</div>
-                              <div className="text-sm text-gray-500">
-                                Sveikata: {gyvunas.sveikata}% | Laimingumas: {gyvunas.laimingumas}%
+                        return (
+                          <motion.div
+                            key={gyvunas.id}
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="text-2xl">{gyvunoTipas.ikona}</div>
+                              <div>
+                                <div className="font-medium">{gyvunas.vardas}</div>
+                                <div className="flex gap-3 text-xs text-gray-500">
+                                  <span>❤️ {gyvunas.sveikata}%</span>
+                                  <span>😊 {gyvunas.laimingumas}%</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          {galimaMaitinti && (
-                            <Button size="sm" onClick={() => onFeedAnimal(gyvunas.id)}>
-                              Maitinti
-                            </Button>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                            {galimaMaitinti && (
+                              <Button
+                                size="sm"
+                                onClick={() => onFeedAnimal(gyvunas.id)}
+                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                              >
+                                Maitinti
+                              </Button>
+                            )}
+                          </motion.div>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </motion.div>
                 )}
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="atnaujinimas" className="space-y-4">
-            <div className="text-center space-y-3">
+          <TabsContent value="atnaujinimas" className="space-y-4 mt-4">
+            <motion.div
+              className="text-center space-y-5 py-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <div className="text-lg font-semibold">Atnaujinti iki {pastatas.lygis + 1} lygio</div>
-              <div className="text-2xl font-bold text-green-600">
-                {pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)} 💰
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ArrowUpCircle className="h-12 w-12 text-green-500 animate-pulse" />
+                </div>
+                <div className="flex justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center text-3xl">
+                    {pastatoTipas?.ikona}
+                  </div>
+                </div>
               </div>
 
-              <div className="text-sm text-gray-600 space-y-1">
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">
+                <AnimatedCounter value={pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)} /> 💰
+              </div>
+
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 {pastatas.tipas === "tvartas" && (
-                  <div>Talpa: {PASTATU_TIPAI.tvartas.talpa(pastatas.lygis + 1)} gyvūnų</div>
+                  <div>
+                    Talpa: {PASTATU_TIPAI.tvartas.talpa(pastatas.lygis)} →{" "}
+                    {PASTATU_TIPAI.tvartas.talpa(pastatas.lygis + 1)} gyvūnų
+                  </div>
                 )}
                 {pastatas.tipas === "sandelis" && (
-                  <div>Talpa: {PASTATU_TIPAI.sandelis.talpa(pastatas.lygis + 1)} vienetų</div>
+                  <div>
+                    Talpa: {PASTATU_TIPAI.sandelis.talpa(pastatas.lygis)} →{" "}
+                    {PASTATU_TIPAI.sandelis.talpa(pastatas.lygis + 1)} vienetų
+                  </div>
                 )}
                 <div>Padidės efektyvumas ir pajamos</div>
               </div>
 
               <Button
                 onClick={handleUpgrade}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                 disabled={pinigai < pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)}
               >
                 Atnaujinti pastatą
               </Button>
-            </div>
+            </motion.div>
           </TabsContent>
         </Tabs>
       </DialogContent>

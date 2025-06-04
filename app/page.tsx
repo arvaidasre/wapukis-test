@@ -34,6 +34,7 @@ function DidysisUkisContent() {
   const [augalai, setAugalai] = useState<Augalas[]>([])
   const [gyvunai, setGyvunai] = useState<Gyvunas[]>([])
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [isDemo, setIsDemo] = useState(false)
 
   // UI būsena
   const [selectedBuilding, setSelectedBuilding] = useState<Pastatas | null>(null)
@@ -49,27 +50,30 @@ function DidysisUkisContent() {
 
   const initializeGame = async () => {
     try {
-      // Gauti dabartinį vartotoją
-      const { user } = await authFunctions.getCurrentUser()
-      if (!user) {
-        //router.push('/auth') //router not defined
+      console.log("Initializing game...")
+
+      // Bandyti gauti dabartinį vartotoją
+      const { user, error } = await authFunctions.getCurrentUser()
+
+      if (error || !user) {
+        console.log("No authenticated user, using demo mode")
+        initializeDemoGame()
         return
       }
 
+      console.log("Authenticated user found:", user.id)
       setCurrentUser(user)
 
       // Gauti vartotojo ūkį
       const { data: ukisData, error: ukisError } = await dbFunctions.getUserFarm(user.id)
 
       if (ukisError || !ukisData) {
-        toast({
-          title: "Klaida",
-          description: "Nepavyko rasti jūsų ūkio",
-          variant: "destructive",
-        })
+        console.log("No farm found, using demo mode")
+        initializeDemoGame()
         return
       }
 
+      console.log("Farm found:", ukisData)
       setUkis(ukisData)
 
       // Gauti išteklius
@@ -102,14 +106,77 @@ function DidysisUkisContent() {
       if (gyvunaiData) {
         setGyvunai(gyvunaiData)
       }
+
+      console.log("Game initialized successfully with database")
     } catch (error) {
       console.error("Game initialization error:", error)
-      toast({
-        title: "Klaida",
-        description: "Nepavyko inicializuoti žaidimo",
-        variant: "destructive",
-      })
+      console.log("Falling back to demo mode")
+      initializeDemoGame()
     }
+  }
+
+  const initializeDemoGame = () => {
+    console.log("Initializing demo game...")
+    setIsDemo(true)
+
+    // Sukurti demo ūkį
+    const demoUkis: Ukis = {
+      id: "demo-ukis",
+      vartotojo_id: "demo-user",
+      pavadinimas: "Demo Ūkis",
+      lygis: 1,
+      pinigai: 1000,
+      patirtis: 0,
+      sukurimo_data: new Date().toISOString(),
+    }
+
+    setUkis(demoUkis)
+
+    // Pradiniai ištekliai
+    const pradiniaiIstekliai: Isteklius[] = [
+      { id: "1", ukio_id: demoUkis.id, tipas: "grudai", kiekis: 50, atnaujinimo_data: new Date().toISOString() },
+      { id: "2", ukio_id: demoUkis.id, tipas: "vaisiai", kiekis: 20, atnaujinimo_data: new Date().toISOString() },
+      { id: "3", ukio_id: demoUkis.id, tipas: "pienas", kiekis: 10, atnaujinimo_data: new Date().toISOString() },
+      { id: "4", ukio_id: demoUkis.id, tipas: "kiausiniai", kiekis: 15, atnaujinimo_data: new Date().toISOString() },
+      { id: "5", ukio_id: demoUkis.id, tipas: "mesa", kiekis: 5, atnaujinimo_data: new Date().toISOString() },
+    ]
+
+    setIstekliai(pradiniaiIstekliai)
+
+    // Pradiniai pastatai
+    const pradiniaiPastatai: Pastatas[] = [
+      {
+        id: "pastatas-1",
+        ukio_id: demoUkis.id,
+        tipas: "laukas",
+        lygis: 1,
+        pozicija_x: 0,
+        pozicija_y: 0,
+        busena: "laisvas",
+        sukurimo_data: new Date().toISOString(),
+      },
+      {
+        id: "pastatas-2",
+        ukio_id: demoUkis.id,
+        tipas: "tvartas",
+        lygis: 1,
+        pozicija_x: 1,
+        pozicija_y: 0,
+        busena: "laisvas",
+        sukurimo_data: new Date().toISOString(),
+      },
+    ]
+
+    setPastatai(pradiniaiPastatai)
+    setAugalai([])
+    setGyvunai([])
+
+    console.log("Demo game initialized successfully")
+
+    toast({
+      title: "Demo režimas",
+      description: "Žaidžiate demo režimu. Duomenys nebus išsaugoti.",
+    })
   }
 
   // Pastato paspaudimas
@@ -352,7 +419,9 @@ function DidysisUkisContent() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-green-800">Didysis Ūkis</h1>
-              <p className="text-green-600">{ukis.pavadinimas}</p>
+              <p className="text-green-600">
+                {ukis.pavadinimas} {isDemo && <span className="text-amber-600">(Demo)</span>}
+              </p>
             </div>
 
             <div className="flex gap-2">
@@ -369,8 +438,8 @@ function DidysisUkisContent() {
                 Užduotys
               </Button>
 
-              {/* Pridėti vartotojo meniu */}
-              {ukis && <UserMenu lygis={ukis.lygis} patirtis={ukis.patirtis} />}
+              {/* Pridėti vartotojo meniu tik jei ne demo */}
+              {ukis && !isDemo && <UserMenu lygis={ukis.lygis} patirtis={ukis.patirtis} />}
             </div>
           </div>
         </div>
