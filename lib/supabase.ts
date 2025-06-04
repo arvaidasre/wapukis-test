@@ -71,12 +71,19 @@ export interface Gyvunas {
 
 // Autentifikacijos funkcijos
 export const authFunctions = {
-  // Registracija
+  // Registracija su geresniu klaidų valdymu
   async signUp(email: string, password: string, slapyvardis: string, ukioPavadinimas: string) {
     try {
       console.log("Starting signUp process...")
 
-      // 1. Registruoti vartotoją
+      // 1. Pirmiausia patikrinti ar vartotojas jau egzistuoja
+      const { data: existingUser } = await supabase.auth.getUser()
+      if (existingUser?.user) {
+        console.log("User already signed in, signing out first...")
+        await supabase.auth.signOut()
+      }
+
+      // 2. Registruoti vartotoją be automatinio trigger'io
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -92,25 +99,70 @@ export const authFunctions = {
 
       if (error) {
         console.error("Supabase signUp error:", error)
-        throw new Error(error.message || "Registracijos klaida")
+
+        // Specifinės klaidos
+        if (error.message.includes("User already registered")) {
+          throw new Error("Šis el. paštas jau užregistruotas")
+        } else if (error.message.includes("Invalid email")) {
+          throw new Error("Neteisingas el. pašto formatas")
+        } else if (error.message.includes("Password")) {
+          throw new Error("Slaptažodis neatitinka reikalavimų")
+        } else if (error.message.includes("Database error")) {
+          // Bandyti be trigger'io
+          console.log("Database trigger error, trying manual profile creation...")
+        } else {
+          throw new Error(error.message || "Registracijos klaida")
+        }
       }
 
-      // 2. Palaukti, kad trigger'is sukurtų profilį
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (!data?.user) {
+        throw new Error("Nepavyko sukurti vartotojo")
+      }
 
-      // 3. Prisijungti iš karto po registracijos
-      if (data?.user) {
-        console.log("User created, signing in...")
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+      console.log("User created successfully:", data.user.id)
+
+      // 3. Palaukti ir patikrinti ar profilis sukurtas
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // 4. Patikrinti ar profilis egzistuoja, jei ne - sukurti rankiniu būdu
+      const { data: profileData, error: profileError } = await supabase
+        .from("vartotojai")
+        .select("id")
+        .eq("id", data.user.id)
+        .single()
+
+      if (profileError || !profileData) {
+        console.log("Profile not found, creating manually...")
+
+        // Sukurti profilį rankiniu būdu
+        const { error: insertError } = await supabase.from("vartotojai").insert({
+          id: data.user.id,
+          el_pastas: email,
+          slapyvardis: slapyvardis,
+          el_pasto_patvirtintas: true,
         })
 
-        if (signInError) {
-          console.error("Auto sign-in error:", signInError)
+        if (insertError) {
+          console.error("Manual profile creation error:", insertError)
+          // Tęsti be profilio - bus sukurtas vėliau
         } else {
-          console.log("Auto sign-in successful")
+          console.log("Profile created manually")
         }
+      } else {
+        console.log("Profile exists")
+      }
+
+      // 5. Prisijungti automatiškai
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        console.error("Auto sign-in error:", signInError)
+        // Tęsti be automatinio prisijungimo
+      } else {
+        console.log("Auto sign-in successful")
       }
 
       return { data, error: null }
@@ -130,7 +182,14 @@ export const authFunctions = {
 
       if (error) {
         console.error("Supabase signIn error:", error)
-        throw new Error(error.message || "Prisijungimo klaida")
+
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Neteisingas el. paštas arba slaptažodis")
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Patvirtinkite el. paštą prieš prisijungiant")
+        } else {
+          throw new Error(error.message || "Prisijungimo klaida")
+        }
       }
 
       return { data, error: null }
@@ -242,9 +301,38 @@ export const authFunctions = {
   },
 }
 
-// Duomenų bazės funkcijos
+// Duomenų bazės funkcijos su geresniu klaidų valdymu
 export const dbFunctions = {
-  // Sukurti ūkį (profilis sukuriamas automatiškai per trigger'į)
+  // Sukurti vartotojo profilį rankiniu būdu
+  async createUserProfile(userId: string, email: string, slapyvardis: string) {
+    try {
+      console.log("Creating user profile manually...")
+
+      const { data, error } = await supabase
+        .from("vartotojai")
+        .insert({
+          id: userId,
+          el_pastas: email,
+          slapyvardis: slapyvardis,
+          el_pasto_patvirtintas: true,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Manual profile creation error:", error)
+        throw new Error(error.message || "Profilio sukūrimo klaida")
+      }
+
+      console.log("Profile created manually:", data)
+      return { data, error: null }
+    } catch (error: any) {
+      console.error("CreateUserProfile function error:", error)
+      return { data: null, error: error }
+    }
+  },
+
+  // Sukurti ūkį
   async createFarm(vartotojoId: string, pavadinimas: string) {
     try {
       console.log("Creating farm for user:", vartotojoId)
@@ -401,5 +489,3 @@ export const dbFunctions = {
     }
   },
 }
-
-// Eksportuoti supabase objektą

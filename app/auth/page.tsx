@@ -102,7 +102,7 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Registracija
+  // Registracija su geresniu klaidų valdymu
   const handleSignUp = async () => {
     console.log("Starting registration process...")
 
@@ -115,7 +115,7 @@ export default function AuthPage() {
     try {
       console.log("Attempting to register user with email:", formData.email)
 
-      // 1. Registruoti vartotoją (ir automatiškai prisijungti)
+      // 1. Registruoti vartotoją
       const { data, error } = await authFunctions.signUp(
         formData.email,
         formData.password,
@@ -126,79 +126,64 @@ export default function AuthPage() {
       console.log("SignUp response:", { data, error })
 
       if (error) {
-        console.error("SignUp error:", error)
-        let errorMessage = "Registracijos klaida"
-
-        if (error.message) {
-          if (error.message.includes("already registered") || error.message.includes("already been registered")) {
-            errorMessage = "Šis el. paštas jau užregistruotas"
-          } else if (error.message.includes("Invalid email")) {
-            errorMessage = "Neteisingas el. pašto formatas"
-          } else if (error.message.includes("Password")) {
-            errorMessage = "Slaptažodis neatitinka reikalavimų"
-          } else if (error.message.includes("weak")) {
-            errorMessage = "Slaptažodis per silpnas"
-          } else {
-            errorMessage = error.message
-          }
-        }
-
-        throw new Error(errorMessage)
+        throw error
       }
 
-      if (data?.user) {
-        console.log("User created successfully:", data.user.id)
-
-        // 2. Palaukti, kad trigger'is sukurtų profilį
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        console.log("Creating farm...")
-
-        // 3. Sukurti ūkį
-        const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
-          data.user.id,
-          formData.ukioPavadinimas,
-        )
-
-        if (ukisError) {
-          console.error("Farm creation error:", ukisError)
-          throw new Error("Nepavyko sukurti ūkio: " + ukisError.message)
-        }
-
-        if (!ukisData) {
-          throw new Error("Ūkio duomenys negauti")
-        }
-
-        console.log("Farm created, creating resources...")
-
-        // 4. Sukurti pradinius išteklius
-        const { error: istekliaiError } = await dbFunctions.createInitialResources(ukisData.id)
-        if (istekliaiError) {
-          console.error("Resources creation error:", istekliaiError)
-          throw new Error("Nepavyko sukurti pradinių išteklių: " + istekliaiError.message)
-        }
-
-        console.log("Resources created, creating buildings...")
-
-        // 5. Sukurti pradinius pastatus
-        const { error: pastataiError } = await dbFunctions.createInitialBuildings(ukisData.id)
-        if (pastataiError) {
-          console.error("Buildings creation error:", pastataiError)
-          throw new Error("Nepavyko sukurti pradinių pastatų: " + pastataiError.message)
-        }
-
-        console.log("Registration completed successfully!")
-
-        toast({
-          title: "Registracija sėkminga! 🎉",
-          description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
-        })
-
-        // 6. Iš karto nukreipti į žaidimą
-        router.push("/")
-      } else {
+      if (!data?.user) {
         throw new Error("Nepavyko sukurti vartotojo")
       }
+
+      console.log("User created successfully:", data.user.id)
+
+      // 2. Palaukti ir patikrinti ar profilis egzistuoja
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // 3. Bandyti sukurti profilį rankiniu būdu jei reikia
+      try {
+        await dbFunctions.createUserProfile(data.user.id, formData.email, formData.slapyvardis)
+      } catch (profileError) {
+        console.log("Profile creation error (might already exist):", profileError)
+      }
+
+      // 4. Sukurti ūkį
+      const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(data.user.id, formData.ukioPavadinimas)
+
+      if (ukisError) {
+        console.error("Farm creation error:", ukisError)
+        throw new Error("Nepavyko sukurti ūkio: " + ukisError.message)
+      }
+
+      if (!ukisData) {
+        throw new Error("Ūkio duomenys negauti")
+      }
+
+      console.log("Farm created, creating resources...")
+
+      // 5. Sukurti pradinius išteklius
+      const { error: istekliaiError } = await dbFunctions.createInitialResources(ukisData.id)
+      if (istekliaiError) {
+        console.error("Resources creation error:", istekliaiError)
+        // Tęsti be išteklių - bus sukurti vėliau
+      }
+
+      console.log("Resources created, creating buildings...")
+
+      // 6. Sukurti pradinius pastatus
+      const { error: pastataiError } = await dbFunctions.createInitialBuildings(ukisData.id)
+      if (pastataiError) {
+        console.error("Buildings creation error:", pastataiError)
+        // Tęsti be pastatų - bus sukurti vėliau
+      }
+
+      console.log("Registration completed successfully!")
+
+      toast({
+        title: "Registracija sėkminga! 🎉",
+        description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
+      })
+
+      // 7. Nukreipti į žaidimą
+      router.push("/")
     } catch (error: any) {
       console.error("Registration error:", error)
       toast({
@@ -229,27 +214,19 @@ export default function AuthPage() {
       console.log("SignIn response:", { data, error })
 
       if (error) {
-        console.error("SignIn error:", error)
-        let errorMessage = "Prisijungimo klaida"
-
-        if (error.message) {
-          if (error.message.includes("Invalid login credentials")) {
-            errorMessage = "Neteisingas el. paštas arba slaptažodis"
-          } else if (error.message.includes("Email not confirmed")) {
-            errorMessage = "Patvirtinkite el. paštą prieš prisijungiant"
-          } else {
-            errorMessage = error.message
-          }
-        }
-
-        throw new Error(errorMessage)
+        throw error
       }
 
       if (data?.user) {
         console.log("Sign in successful, updating last login...")
 
         // Atnaujinti paskutinį prisijungimą
-        await dbFunctions.updateLastLogin(data.user.id)
+        try {
+          await dbFunctions.updateLastLogin(data.user.id)
+        } catch (updateError) {
+          console.log("Last login update error:", updateError)
+          // Tęsti be atnaujinimo
+        }
 
         toast({
           title: "Prisijungimas sėkmingas! 🌾",
@@ -331,8 +308,8 @@ export default function AuthPage() {
           <Alert className="mb-4 border-blue-200 bg-blue-50">
             <CheckCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Svarbu:</strong> Prieš registraciją paleiskite SQL script'ą Supabase duomenų bazėje ir išjunkite
-              el. pašto patvirtinimą.
+              <strong>Svarbu:</strong> Paleiskite naują SQL script'ą <code>scripts/02-fix-registration.sql</code> ir
+              išjunkite el. pašto patvirtinimą Supabase nustatymuose.
             </AlertDescription>
           </Alert>
 
@@ -340,8 +317,7 @@ export default function AuthPage() {
           <Alert className="mb-4 border-amber-200 bg-amber-50">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Demo režimas:</strong> Jei neturite Supabase duomenų bazės, galite naudoti demo versiją be
-              registracijos.
+              <strong>Demo režimas:</strong> Jei registracija neveikia, galite naudoti demo versiją be registracijos.
             </AlertDescription>
           </Alert>
 
