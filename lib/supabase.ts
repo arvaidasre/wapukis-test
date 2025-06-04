@@ -76,6 +76,7 @@ export const authFunctions = {
     try {
       console.log("Starting signUp process...")
 
+      // 1. Registruoti vartotoją
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -92,6 +93,24 @@ export const authFunctions = {
       if (error) {
         console.error("Supabase signUp error:", error)
         throw new Error(error.message || "Registracijos klaida")
+      }
+
+      // 2. Palaukti, kad trigger'is sukurtų profilį
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // 3. Prisijungti iš karto po registracijos
+      if (data?.user) {
+        console.log("User created, signing in...")
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (signInError) {
+          console.error("Auto sign-in error:", signInError)
+        } else {
+          console.log("Auto sign-in successful")
+        }
       }
 
       return { data, error: null }

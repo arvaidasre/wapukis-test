@@ -115,7 +115,7 @@ export default function AuthPage() {
     try {
       console.log("Attempting to register user with email:", formData.email)
 
-      // Registruoti vartotoją
+      // 1. Registruoti vartotoją (ir automatiškai prisijungti)
       const { data, error } = await authFunctions.signUp(
         formData.email,
         formData.password,
@@ -149,12 +149,12 @@ export default function AuthPage() {
       if (data?.user) {
         console.log("User created successfully:", data.user.id)
 
-        // Palaukti truputį, kad trigger'is sukurtų profilį
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // 2. Palaukti, kad trigger'is sukurtų profilį
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
         console.log("Creating farm...")
 
-        // Sukurti ūkį
+        // 3. Sukurti ūkį
         const { data: ukisData, error: ukisError } = await dbFunctions.createFarm(
           data.user.id,
           formData.ukioPavadinimas,
@@ -171,7 +171,7 @@ export default function AuthPage() {
 
         console.log("Farm created, creating resources...")
 
-        // Sukurti pradinius išteklius
+        // 4. Sukurti pradinius išteklius
         const { error: istekliaiError } = await dbFunctions.createInitialResources(ukisData.id)
         if (istekliaiError) {
           console.error("Resources creation error:", istekliaiError)
@@ -180,7 +180,7 @@ export default function AuthPage() {
 
         console.log("Resources created, creating buildings...")
 
-        // Sukurti pradinius pastatus
+        // 5. Sukurti pradinius pastatus
         const { error: pastataiError } = await dbFunctions.createInitialBuildings(ukisData.id)
         if (pastataiError) {
           console.error("Buildings creation error:", pastataiError)
@@ -194,7 +194,7 @@ export default function AuthPage() {
           description: "Jūsų paskyra sukurta ir galite iš karto pradėti žaisti!",
         })
 
-        // Iš karto nukreipti į žaidimą
+        // 6. Iš karto nukreipti į žaidimą
         router.push("/")
       } else {
         throw new Error("Nepavyko sukurti vartotojo")

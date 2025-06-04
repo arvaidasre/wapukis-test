@@ -42,10 +42,18 @@ export function AuthGuard({ children }: AuthGuardProps) {
     try {
       console.log("Checking authentication...")
 
-      // Naudojame naują hasActiveSession funkciją
-      const hasSession = await authFunctions.hasActiveSession()
+      // Pirmiausia patikriname, ar yra aktyvi sesija
+      const { data: sessionData, error: sessionError } = await authFunctions.supabase.auth.getSession()
 
-      if (!hasSession) {
+      if (sessionError) {
+        console.error("Session error:", sessionError)
+        setAuthenticated(false)
+        setShowDemo(true)
+        setLoading(false)
+        return
+      }
+
+      if (!sessionData?.session) {
         console.log("No active session found, showing demo option")
         setAuthenticated(false)
         setShowDemo(true)
@@ -54,19 +62,22 @@ export function AuthGuard({ children }: AuthGuardProps) {
       }
 
       // Jei yra sesija, bandome gauti vartotoją
-      const { user } = await authFunctions.getCurrentUser()
+      const {
+        data: { user },
+        error,
+      } = await authFunctions.supabase.auth.getUser()
 
-      if (user) {
-        console.log("User is authenticated")
-        setAuthenticated(true)
-        setShowDemo(false)
-      } else {
+      if (error || !user) {
         console.log("No user found, showing demo option")
         setAuthenticated(false)
         setShowDemo(true)
+      } else {
+        console.log("User is authenticated:", user.id)
+        setAuthenticated(true)
+        setShowDemo(false)
       }
     } catch (error) {
-      console.log("Auth check error:", error)
+      console.error("Auth check error:", error)
       setAuthenticated(false)
       setShowDemo(true)
     } finally {
