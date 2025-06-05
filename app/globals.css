@@ -120,3 +120,13 @@ h6,
 .font-heading {
   font-family: var(--font-heading), cursive;
 }
+
+/* Ensure heading font is applied if not globally strong */
+.font-heading {
+  font-family: var(--font-heading), cursive !important;
+}
+
+/* Add a subtle text shadow for better readability on complex backgrounds */
+h1.font-heading {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
