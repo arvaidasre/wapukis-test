@@ -34,7 +34,7 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-sm text-green-900 dark:text-green-100">
           <span>Slaptažodžio stiprumas:</span>
           <span
             className={`font-medium ${
@@ -44,7 +44,7 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
             {getStrengthText()}
           </span>
         </div>
-        <Progress value={strength} className="h-2">
+        <Progress value={strength} className="h-2 bg-gray-200 dark:bg-gray-700">
           <div className={`h-full transition-all ${getStrengthColor()}`} style={{ width: `${strength}%` }} />
         </Progress>
       </div>
@@ -55,7 +55,9 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
           return (
             <div key={index} className="flex items-center gap-2 text-sm">
               {passed ? <Check className="h-4 w-4 text-green-500" /> : <X className="h-4 w-4 text-gray-400" />}
-              <span className={passed ? "text-green-700" : "text-gray-500"}>{req.label}</span>
+              <span className={passed ? "text-green-700 dark:text-green-300" : "text-gray-500 dark:text-gray-400"}>
+                {req.label}
+              </span>
             </div>
           )
         })}

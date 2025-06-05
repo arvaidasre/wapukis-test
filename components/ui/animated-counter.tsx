@@ -36,5 +36,9 @@ export function AnimatedCounter({
     }
   }, [])
 
-  return <animated.span className={className}>{number.to((val) => formatValue(Math.floor(val)))}</animated.span>
+  return (
+    <animated.span className={`font-semibold text-green-800 dark:text-green-200 ${className}`}>
+      {number.to((val) => formatValue(Math.floor(val)))}
+    </animated.span>
+  )
 }

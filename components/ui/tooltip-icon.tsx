@@ -17,7 +17,10 @@ export function TooltipIcon({ icon, content, side = "top", className }: TooltipI
         <TooltipTrigger asChild>
           <span className={`cursor-help ${className}`}>{icon}</span>
         </TooltipTrigger>
-        <TooltipContent side={side} className="max-w-xs">
+        <TooltipContent
+          side={side}
+          className="max-w-xs bg-yellow-50 dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700 text-green-900 dark:text-green-100 shadow-md"
+        >
           {content}
         </TooltipContent>
       </Tooltip>

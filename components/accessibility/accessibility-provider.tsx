@@ -19,23 +19,18 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
   const politeAnnouncerRef = useRef<HTMLDivElement>(null)
   const assertiveAnnouncerRef = useRef<HTMLDivElement>(null)
 
-  // Aptikti klaviatūros navigaciją
   useEffect(() => {
     const cleanup = detectKeyboardNavigation()
     return cleanup
   }, [])
 
-  // Patikrinti ar vartotojas naudoja ekrano skaitytuvą
   useEffect(() => {
-    // Bandyti aptikti ekrano skaitytuvą
     const detectScreenReader = () => {
-      // Kai kurie ekrano skaitytuvai prideda šias klases
       const axsPresent =
         document.documentElement.classList.contains("sr") ||
         document.documentElement.classList.contains("accessible") ||
         document.documentElement.classList.contains("screenreader")
 
-      // Jei vartotojas paspaudė Tab mygtuką, gali būti, kad naudoja ekrano skaitytuvą
       const keyboardUser = document.body.classList.contains("keyboard-navigation")
 
       if (axsPresent || keyboardUser) {
@@ -43,36 +38,29 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       }
     }
 
-    // Patikrinti po trumpo laiko, kad ekrano skaitytuvas spėtų užsikrauti
     const timer = setTimeout(detectScreenReader, 1000)
 
     return () => clearTimeout(timer)
   }, [])
 
-  // Pranešimų funkcija
   const announce = (message: string, priority: "polite" | "assertive" = "polite") => {
     const announcer = priority === "assertive" ? assertiveAnnouncerRef.current : politeAnnouncerRef.current
 
     if (announcer) {
-      // Išvalyti esamą turinį
       announcer.textContent = ""
 
-      // Trumpas timeout, kad ekrano skaitytuvas aptiktų pakeitimą
       setTimeout(() => {
         announcer.textContent = message
       }, 50)
     }
 
-    // Taip pat išsaugoti pranešimą bibliotekoje
     announceToScreenReader(message, priority)
   }
 
-  // Elemento fokusavimo funkcija
   const focusElement = (selector: string) => {
     return focusHTMLElement(selector)
   }
 
-  // Prieinamumo nustatymų perjungimo funkcijos
   const toggleScreenReader = () => {
     setState((prev) => ({ ...prev, screenReaderEnabled: !prev.screenReaderEnabled }))
   }
@@ -119,7 +107,6 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     >
       {children}
 
-      {/* Ekrano skaitytuvų pranešimų regionai */}
       <div
         ref={politeAnnouncerRef}
         aria-live="polite"

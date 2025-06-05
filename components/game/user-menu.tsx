@@ -34,7 +34,6 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
 
   const loadUserData = async () => {
     try {
-      // Pirmiausia patikriname, ar yra aktyvi sesija
       const hasSession = await authFunctions.hasActiveSession()
 
       if (!hasSession) {
@@ -50,7 +49,6 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
 
       setUser(user)
 
-      // Gauti vartotojo profilį
       const { data: profile } = await dbFunctions.supabase.from("vartotojai").select("*").eq("id", user.id).single()
 
       if (profile) {
@@ -114,9 +112,14 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full border-2 border-yellow-300 dark:border-yellow-700 bg-yellow-100/50 dark:bg-yellow-900/20 hover:bg-yellow-200/50 dark:hover:bg-yellow-800/30"
+        >
           <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-green-100 text-green-800">{getUserInitials()}</AvatarFallback>
+            <AvatarFallback className="bg-lime-100 text-lime-800 dark:bg-lime-800 dark:text-lime-100">
+              {getUserInitials()}
+            </AvatarFallback>
           </Avatar>
           <Badge className={`absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs ${getLevelBadgeColor()}`}>
             {lygis}
@@ -124,25 +127,29 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-64" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
+      <DropdownMenuContent
+        className="w-64 bg-yellow-50 dark:bg-gray-800 border-2 border-yellow-700 dark:border-yellow-900 shadow-lg text-green-900 dark:text-green-100"
+        align="end"
+        forceMount
+      >
+        <DropdownMenuLabel className="font-normal p-4">
           <div className="flex flex-col space-y-2">
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium">{userProfile?.slapyvardis || "Ūkininkas"}</span>
             </div>
 
-            <div className="text-xs text-muted-foreground">{user.email}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
 
             <div className="flex items-center justify-between">
               <div className="text-xs">
                 <span className="font-medium">Lygis {lygis}</span>
               </div>
-              <div className="text-xs text-muted-foreground">{patirtis} XP</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{patirtis} XP</div>
             </div>
 
             {userProfile?.sukurimo_data && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                 <Calendar className="h-3 w-3" />
                 Narys nuo {formatDate(userProfile.sukurimo_data)}
               </div>
@@ -150,21 +157,24 @@ export function UserMenu({ lygis, patirtis }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-yellow-200 dark:bg-yellow-700" />
 
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer flex items-center gap-2 hover:bg-yellow-100 dark:hover:bg-yellow-900 focus:bg-yellow-100 dark:focus:bg-yellow-900">
           <User className="mr-2 h-4 w-4" />
           <span>Profilis</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="cursor-pointer">
+        <DropdownMenuItem className="cursor-pointer flex items-center gap-2 hover:bg-yellow-100 dark:hover:bg-yellow-900 focus:bg-yellow-100 dark:focus:bg-yellow-900">
           <Settings className="mr-2 h-4 w-4" />
           <span>Nustatymai</span>
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-yellow-200 dark:bg-yellow-700" />
 
-        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={handleSignOut}>
+        <DropdownMenuItem
+          className="cursor-pointer flex items-center gap-2 text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-900 focus:bg-red-50 dark:focus:bg-red-900"
+          onClick={handleSignOut}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Atsijungti</span>
         </DropdownMenuItem>

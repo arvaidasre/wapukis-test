@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { Loader2, Eye, EyeOff, Mail, Lock, User, Home, CheckCircle } from "lucide-react"
+import Image from "next/image"
 
 export default function AuthPage() {
   const { toast } = useToast()
@@ -34,7 +35,6 @@ export default function AuthPage() {
   const [resetEmail, setResetEmail] = useState("")
   const [resetSent, setResetSent] = useState(false)
 
-  // Tikrinti ar vartotojas jau prisijungęs
   useEffect(() => {
     checkExistingAuth()
   }, [])
@@ -56,11 +56,9 @@ export default function AuthPage() {
     }
   }
 
-  // Formos validacija
   const validateForm = (isSignUp = false) => {
     const newErrors: Record<string, string> = {}
 
-    // El. pašto validacija
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!formData.email) {
       newErrors.email = "El. paštas yra privalomas"
@@ -68,7 +66,6 @@ export default function AuthPage() {
       newErrors.email = "Neteisingas el. pašto formatas"
     }
 
-    // Slaptažodžio validacija
     if (!formData.password) {
       newErrors.password = "Slaptažodis yra privalomas"
     } else if (isSignUp && formData.password.length < 6) {
@@ -76,21 +73,18 @@ export default function AuthPage() {
     }
 
     if (isSignUp) {
-      // Slaptažodžio patvirtinimo validacija
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = "Patvirtinkite slaptažodį"
       } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = "Slaptažodžiai nesutampa"
       }
 
-      // Slapyvardžio validacija
       if (!formData.slapyvardis) {
         newErrors.slapyvardis = "Slapyvardis yra privalomas"
       } else if (formData.slapyvardis.length < 3) {
         newErrors.slapyvardis = "Slapyvardis turi būti mažiausiai 3 simbolių"
       }
 
-      // Ūkio pavadinimo validacija
       if (!formData.ukioPavadinimas) {
         newErrors.ukioPavadinimas = "Ūkio pavadinimas yra privalomas"
       } else if (formData.ukioPavadinimas.length < 2) {
@@ -102,7 +96,6 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Supaprastinta registracija
   const handleSignUp = async () => {
     console.log("Starting simplified registration process...")
 
@@ -115,7 +108,6 @@ export default function AuthPage() {
     try {
       console.log("Attempting to register user with email:", formData.email)
 
-      // 1. Registruoti vartotoją - trigger turėtų sukurti profilį
       const result = await authFunctions.signUp(
         formData.email,
         formData.password,
@@ -133,7 +125,6 @@ export default function AuthPage() {
         throw new Error("Nepavyko sukurti vartotojo")
       }
 
-      // 2. Jei prisijungimas sėkmingas, sukurti žaidimo struktūrą
       if (!result.needsConfirmation && result.data.user) {
         console.log("User is signed in, initializing game...")
 
@@ -146,7 +137,6 @@ export default function AuthPage() {
 
         if (!gameInit.success) {
           console.log("Game initialization failed, but user is created:", gameInit.error)
-          // Tęsti - žaidimo struktūra bus sukurta vėliau
         }
 
         toast({
@@ -156,13 +146,11 @@ export default function AuthPage() {
 
         router.push("/")
       } else {
-        // Jei reikia patvirtinimo arba nepavyko prisijungti
         toast({
           title: "Registracija sėkminga! 📧",
           description: result.message || "Prisijunkite su savo duomenimis.",
         })
 
-        // Pereiti į prisijungimo skirtuką
         setActiveTab("prisijungimas")
       }
     } catch (error: any) {
@@ -178,7 +166,6 @@ export default function AuthPage() {
     }
   }
 
-  // Prisijungimas su žaidimo inicializacija
   const handleSignIn = async () => {
     console.log("Starting sign in process...")
 
@@ -202,20 +189,17 @@ export default function AuthPage() {
       if (data?.user) {
         console.log("Sign in successful")
 
-        // Atnaujinti paskutinį prisijungimą
         try {
           await dbFunctions.updateLastLogin(data.user.id)
         } catch (updateError) {
           console.log("Last login update error:", updateError)
         }
 
-        // Patikrinti ar vartotojas turi žaidimo struktūrą
         const { data: farm } = await dbFunctions.getUserFarm(data.user.id)
 
         if (!farm) {
           console.log("No farm found, initializing game structure...")
 
-          // Sukurti žaidimo struktūrą
           const gameInit = await dbFunctions.initializeUserGame(
             data.user.id,
             formData.email,
@@ -257,7 +241,6 @@ export default function AuthPage() {
     }
   }
 
-  // Slaptažodžio atkūrimas
   const handlePasswordReset = async () => {
     if (!resetEmail) {
       toast({
@@ -302,34 +285,58 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-100 to-green-200 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl text-green-800 flex items-center justify-center gap-2">
+    <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center p-4">
+      <Image
+        src="/placeholder.svg?height=1080&width=1920"
+        alt="Linksmas ūkio peizažas"
+        layout="fill"
+        objectFit="cover"
+        quality={90}
+        className="-z-10"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/20 -z-10" />
+      <Card className="w-full max-w-md bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+        <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-6 sm:p-8 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800 text-center">
+          <CardTitle className="font-heading text-3xl text-green-800 dark:text-green-200 flex items-center justify-center gap-2">
             🌾 Didysis Ūkis
           </CardTitle>
-          <p className="text-green-600">Lietuviška ūkio simuliacija</p>
+          <p className="text-green-600 dark:text-green-300">Lietuviška ūkio simuliacija</p>
         </CardHeader>
 
-        <CardContent>
-          {/* Pranešimas apie supaprastintą procesą */}
-          <Alert className="mb-4 border-green-200 bg-green-50">
+        <CardContent className="p-6 sm:p-8 bg-yellow-50 dark:bg-yellow-800/30 rounded-b-md">
+          <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
             <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+            <AlertDescription className="text-green-800 dark:text-green-200 text-sm">
               <strong>Supaprastinta:</strong> Registracija dabar veikia automatiškai per trigger'ius. Jei registracija
               nepavyksta, bandykite prisijungti.
             </AlertDescription>
           </Alert>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="prisijungimas">Prisijungimas</TabsTrigger>
-              <TabsTrigger value="registracija">Registracija</TabsTrigger>
-              <TabsTrigger value="atkurimas">Atkūrimas</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-yellow-100/50 dark:bg-yellow-900/20 border-2 border-yellow-700 dark:border-yellow-800 rounded-lg">
+              <TabsTrigger
+                value="prisijungimas"
+                className="data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-700 data-[state=active]:font-semibold dark:data-[state=active]:bg-amber-700 dark:data-[state=active]:border-amber-900 text-green-800 dark:text-green-200"
+              >
+                Prisijungimas
+              </TabsTrigger>
+              <TabsTrigger
+                value="registracija"
+                className="data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-700 data-[state=active]:font-semibold dark:data-[state=active]:bg-amber-700 dark:data-[state=active]:border-amber-900 text-green-800 dark:text-green-200"
+              >
+                Registracija
+              </TabsTrigger>
+              <TabsTrigger
+                value="atkurimas"
+                className="data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:border-amber-700 data-[state=active]:font-semibold dark:data-[state=active]:bg-amber-700 dark:data-[state=active]:border-amber-900 text-green-800 dark:text-green-200"
+              >
+                Atkūrimas
+              </TabsTrigger>
             </TabsList>
 
             {/* Prisijungimas */}
-            <TabsContent value="prisijungimas" className="space-y-4">
+            <TabsContent value="prisijungimas" className="space-y-4 mt-4 text-green-900 dark:text-green-100">
               <div className="space-y-2">
                 <Label htmlFor="signin-email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
@@ -344,7 +351,9 @@ export default function AuthPage() {
                     if (errors.email) setErrors((prev) => ({ ...prev, email: "" }))
                   }}
                   placeholder="jusu@elpastas.lt"
-                  className={errors.email ? "border-red-500" : ""}
+                  className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                    errors.email ? "border-red-500" : ""
+                  }`}
                 />
                 {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
               </div>
@@ -364,13 +373,15 @@ export default function AuthPage() {
                       if (errors.password) setErrors((prev) => ({ ...prev, password: "" }))
                     }}
                     placeholder="••••••••"
-                    className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                    className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                      errors.password ? "border-red-500 pr-10" : "pr-10"
+                    }`}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-600 dark:text-gray-400"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -379,7 +390,11 @@ export default function AuthPage() {
                 {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
               </div>
 
-              <Button onClick={handleSignIn} className="w-full" disabled={loading}>
+              <Button
+                onClick={handleSignIn}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -391,18 +406,26 @@ export default function AuthPage() {
               </Button>
 
               <div className="text-center space-y-2">
-                <Button variant="link" className="text-sm text-green-600" onClick={() => setActiveTab("atkurimas")}>
+                <Button
+                  variant="link"
+                  className="text-sm text-green-600 dark:text-green-300 hover:text-green-700 dark:hover:text-green-400"
+                  onClick={() => setActiveTab("atkurimas")}
+                >
                   Pamiršote slaptažodį?
                 </Button>
-                <div className="text-sm text-gray-500">arba</div>
-                <Button variant="outline" className="w-full" onClick={() => router.push("/")}>
+                <div className="text-sm text-gray-500 dark:text-gray-400">arba</div>
+                <Button
+                  variant="outline"
+                  className="w-full bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+                  onClick={() => router.push("/game?demo=true")}
+                >
                   Tęsti demo režimu
                 </Button>
               </div>
             </TabsContent>
 
             {/* Registracija */}
-            <TabsContent value="registracija" className="space-y-4">
+            <TabsContent value="registracija" className="space-y-4 text-green-900 dark:text-green-100">
               <div className="space-y-2">
                 <Label htmlFor="signup-email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
@@ -417,7 +440,9 @@ export default function AuthPage() {
                     if (errors.email) setErrors((prev) => ({ ...prev, email: "" }))
                   }}
                   placeholder="jusu@elpastas.lt"
-                  className={errors.email ? "border-red-500" : ""}
+                  className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                    errors.email ? "border-red-500" : ""
+                  }`}
                 />
                 {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
               </div>
@@ -435,7 +460,9 @@ export default function AuthPage() {
                     if (errors.slapyvardis) setErrors((prev) => ({ ...prev, slapyvardis: "" }))
                   }}
                   placeholder="JūsųSlapyvardis"
-                  className={errors.slapyvardis ? "border-red-500" : ""}
+                  className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                    errors.slapyvardis ? "border-red-500" : ""
+                  }`}
                 />
                 {errors.slapyvardis && <p className="text-sm text-red-500">{errors.slapyvardis}</p>}
               </div>
@@ -453,7 +480,9 @@ export default function AuthPage() {
                     if (errors.ukioPavadinimas) setErrors((prev) => ({ ...prev, ukioPavadinimas: "" }))
                   }}
                   placeholder="Mano Ūkis"
-                  className={errors.ukioPavadinimas ? "border-red-500" : ""}
+                  className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                    errors.ukioPavadinimas ? "border-red-500" : ""
+                  }`}
                 />
                 {errors.ukioPavadinimas && <p className="text-sm text-red-500">{errors.ukioPavadinimas}</p>}
               </div>
@@ -473,13 +502,15 @@ export default function AuthPage() {
                       if (errors.password) setErrors((prev) => ({ ...prev, password: "" }))
                     }}
                     placeholder="••••••••"
-                    className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                    className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                      errors.password ? "border-red-500 pr-10" : "pr-10"
+                    }`}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-600 dark:text-gray-400"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -505,13 +536,15 @@ export default function AuthPage() {
                       if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: "" }))
                     }}
                     placeholder="••••••••"
-                    className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                    className={`bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700 ${
+                      errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
+                    }`}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-600 dark:text-gray-400"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -520,7 +553,11 @@ export default function AuthPage() {
                 {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
               </div>
 
-              <Button onClick={handleSignUp} className="w-full" disabled={loading}>
+              <Button
+                onClick={handleSignUp}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -531,8 +568,8 @@ export default function AuthPage() {
                 )}
               </Button>
 
-              <Alert>
-                <AlertDescription className="text-sm">
+              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                <AlertDescription className="text-green-800 dark:text-green-200 text-sm">
                   Registruodamiesi sutinkate su mūsų naudojimo sąlygomis ir privatumo politika. Registracija vyksta
                   automatiškai!
                 </AlertDescription>
@@ -540,12 +577,12 @@ export default function AuthPage() {
             </TabsContent>
 
             {/* Slaptažodžio atkūrimas */}
-            <TabsContent value="atkurimas" className="space-y-4">
+            <TabsContent value="atkurimas" className="space-y-4 text-green-900 dark:text-green-100">
               {!resetSent ? (
                 <>
                   <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold">Slaptažodžio atkūrimas</h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Įveskite savo el. pašto adresą ir mes išsiųsime slaptažodžio atkūrimo nuorodą.
                     </p>
                   </div>
@@ -561,10 +598,15 @@ export default function AuthPage() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       placeholder="jusu@elpastas.lt"
+                      className="bg-white dark:bg-gray-800 border-yellow-300 dark:border-yellow-700"
                     />
                   </div>
 
-                  <Button onClick={handlePasswordReset} className="w-full" disabled={loading}>
+                  <Button
+                    onClick={handlePasswordReset}
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
+                    disabled={loading}
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -579,14 +621,15 @@ export default function AuthPage() {
                 <div className="text-center space-y-4">
                   <div className="text-6xl">📧</div>
                   <div>
-                    <h3 className="text-lg font-semibold text-green-700">Nuoroda išsiųsta!</h3>
-                    <p className="text-sm text-gray-600 mt-2">
+                    <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">Nuoroda išsiųsta!</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                       Patikrinkite savo el. paštą <strong>{resetEmail}</strong> ir sekite instrukcijas slaptažodžio
                       atkūrimui.
                     </p>
                   </div>
                   <Button
                     variant="outline"
+                    className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
                     onClick={() => {
                       setResetSent(false)
                       setResetEmail("")
@@ -598,7 +641,11 @@ export default function AuthPage() {
               )}
 
               <div className="text-center">
-                <Button variant="link" className="text-sm text-green-600" onClick={() => setActiveTab("prisijungimas")}>
+                <Button
+                  variant="link"
+                  className="text-sm text-green-600 dark:text-green-300 hover:text-green-700 dark:hover:text-green-400"
+                  onClick={() => setActiveTab("prisijungimas")}
+                >
                   Grįžti į prisijungimą
                 </Button>
               </div>
