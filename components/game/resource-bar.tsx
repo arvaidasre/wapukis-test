@@ -1,6 +1,6 @@
 "use client"
 
-import { CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { TooltipIcon } from "@/components/ui/tooltip-icon"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
 import type { Isteklius } from "@/lib/supabase"
@@ -47,14 +47,14 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
   return (
     <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
       <TooltipProvider>
-        <div className="mb-4 overflow-hidden rounded-xl border-2 border-amber-200 shadow-md">
+        <Card className="mb-4 overflow-hidden border-none shadow-md">
           <CardContent className="p-0">
-            <div className="bg-gradient-to-r from-amber-50 to-amber-100 p-3">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-3">
               <div className="flex flex-wrap gap-4 items-center justify-between">
                 {/* Pinigai ir lygis */}
                 <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border-2 border-amber-200">
-                    <Coins className="h-5 w-5 text-amber-500" />
+                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm">
+                    <Coins className="h-5 w-5 text-yellow-500" />
                     <AnimatedCounter
                       value={pinigai}
                       className="font-semibold"
@@ -66,12 +66,12 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                     <div className="flex items-center gap-1.5">
                       <TooltipIcon
                         icon={
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-semibold shadow-sm border-2 border-green-300">
+                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-semibold shadow-sm">
                             {lygis}
                           </div>
                         }
                         content={
-                          <div className="text-center farm-tooltip">
+                          <div className="text-center">
                             <div className="font-semibold mb-1">Ūkininko lygis</div>
                             <div className="text-xs">
                               Patirtis: {patirtis} / {patirtisKitamLygiui}
@@ -81,7 +81,7 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                       />
                       <Star className="h-4 w-4 text-yellow-500" />
                     </div>
-                    <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner border border-gray-300">
+                    <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
                         style={{ width: `${patirtisProgresas}%` }}
@@ -96,13 +96,13 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                     <TooltipIcon
                       key={tipas}
                       icon={
-                        <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full shadow-sm border-2 border-amber-200">
+                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-full shadow-sm">
                           {getResourceIcon(tipas)}
                           <AnimatedCounter value={getResourceAmount(tipas)} className="text-sm font-medium" />
                         </div>
                       }
                       content={
-                        <div className="farm-tooltip">
+                        <div>
                           <div className="font-semibold">{resourceNames[tipas as keyof typeof resourceNames]}</div>
                           <div className="text-xs">Turimas kiekis: {getResourceAmount(tipas)}</div>
                         </div>
@@ -113,7 +113,7 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
               </div>
             </div>
           </CardContent>
-        </div>
+        </Card>
       </TooltipProvider>
     </motion.div>
   )

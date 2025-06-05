@@ -156,13 +156,18 @@ export function BuildingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md border-2 border-amber-200 rounded-xl bg-white">
-        <DialogHeader className="bg-gradient-to-r from-green-600 to-green-700 -mx-6 -mt-6 px-6 py-4 rounded-t-xl">
-          <DialogTitle className="flex items-center gap-2 text-xl text-white">
-            <div className="p-1.5 bg-white rounded-full">{getBuildingIcon()}</div>
+      <DialogContent className="max-w-md bg-gradient-to-b from-white to-green-50 dark:from-gray-950 dark:to-green-950 border-none shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-1.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-full">
+              {getBuildingIcon()}
+            </div>
             <div className="flex items-center gap-2">
               {pastatoTipas?.pavadinimas}
-              <Badge variant="secondary" className="bg-amber-500 text-white border-0">
+              <Badge
+                variant="secondary"
+                className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900"
+              >
                 Lygis {pastatas.lygis}
               </Badge>
             </div>
@@ -170,16 +175,13 @@ export function BuildingDialog({
         </DialogHeader>
 
         <Tabs defaultValue="veiksmai" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-amber-50 rounded-full p-1">
-            <TabsTrigger
-              value="veiksmai"
-              className="data-[state=active]:bg-white data-[state=active]:text-green-700 rounded-full"
-            >
+          <TabsList className="grid w-full grid-cols-2 bg-green-100/50 dark:bg-green-900/20">
+            <TabsTrigger value="veiksmai" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
               Veiksmai
             </TabsTrigger>
             <TabsTrigger
               value="atnaujinimas"
-              className="data-[state=active]:bg-white data-[state=active]:text-green-700 rounded-full"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
             >
               Atnaujinimas
             </TabsTrigger>
@@ -197,22 +199,25 @@ export function BuildingDialog({
                   >
                     <Label>Pasirinkite augalą sodinimui:</Label>
                     <Select value={selectedCrop} onValueChange={setSelectedCrop}>
-                      <SelectTrigger className="bg-white border-2 border-amber-200 rounded-full">
+                      <SelectTrigger className="bg-white dark:bg-gray-800">
                         <SelectValue placeholder="Pasirinkite augalą" />
                       </SelectTrigger>
-                      <SelectContent className="border-2 border-amber-200 rounded-xl">
+                      <SelectContent>
                         {Object.entries(AUGALU_TIPAI).map(([key, augalas]) => (
                           <SelectItem key={key} value={key}>
                             <div className="flex items-center gap-2">
                               <span>{augalas.ikona}</span>
                               <span>{augalas.pavadinimas}</span>
-                              <span className="text-sm text-amber-600">({augalas.kaina}💰)</span>
+                              <span className="text-sm text-gray-500">({augalas.kaina}💰)</span>
                             </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button onClick={handlePlantCrop} className="w-full farm-button farm-button-green">
+                    <Button
+                      onClick={handlePlantCrop}
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                    >
                       Sodinti
                     </Button>
                   </motion.div>
@@ -231,16 +236,14 @@ export function BuildingDialog({
                         return (
                           <motion.div
                             key={augalas.id}
-                            className="flex items-center justify-between p-4 border-2 border-amber-200 rounded-xl bg-white shadow-sm"
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ duration: 0.2 }}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-200">
-                                <span className="text-2xl">{augaloTipas.ikona}</span>
-                              </div>
+                              <div className="text-2xl">{augaloTipas.ikona}</div>
                               <div>
                                 <div className="font-medium">{augaloTipas.pavadinimas}</div>
                                 <div className="text-sm text-gray-500">
@@ -249,7 +252,11 @@ export function BuildingDialog({
                               </div>
                             </div>
                             {paruostas && (
-                              <Button size="sm" onClick={() => onHarvestCrop(augalas.id)} className="farm-button">
+                              <Button
+                                size="sm"
+                                onClick={() => onHarvestCrop(augalas.id)}
+                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                              >
                                 Nuimti derlių
                               </Button>
                             )}
@@ -272,16 +279,16 @@ export function BuildingDialog({
                 >
                   <Label>Pirkti gyvūną:</Label>
                   <Select value={selectedAnimal} onValueChange={setSelectedAnimal}>
-                    <SelectTrigger className="bg-white border-2 border-amber-200 rounded-full">
+                    <SelectTrigger className="bg-white dark:bg-gray-800">
                       <SelectValue placeholder="Pasirinkite gyvūną" />
                     </SelectTrigger>
-                    <SelectContent className="border-2 border-amber-200 rounded-xl">
+                    <SelectContent>
                       {Object.entries(GYVUNU_TIPAI).map(([key, gyvunas]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
                             <span>{gyvunas.ikona}</span>
                             <span>{gyvunas.pavadinimas}</span>
-                            <span className="text-sm text-amber-600">({gyvunas.kaina}💰)</span>
+                            <span className="text-sm text-gray-500">({gyvunas.kaina}💰)</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -295,11 +302,14 @@ export function BuildingDialog({
                       value={animalName}
                       onChange={(e) => setAnimalName(e.target.value)}
                       placeholder="Įveskite vardą"
-                      className="bg-white border-2 border-amber-200 rounded-full"
+                      className="bg-white dark:bg-gray-800"
                     />
                   </div>
 
-                  <Button onClick={handleBuyAnimal} className="w-full farm-button farm-button-blue">
+                  <Button
+                    onClick={handleBuyAnimal}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  >
                     Pirkti gyvūną
                   </Button>
                 </motion.div>
@@ -322,16 +332,14 @@ export function BuildingDialog({
                         return (
                           <motion.div
                             key={gyvunas.id}
-                            className="flex items-center justify-between p-4 border-2 border-amber-200 rounded-xl bg-white shadow-sm"
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
                             transition={{ duration: 0.2 }}
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-200">
-                                <span className="text-2xl">{gyvunoTipas.ikona}</span>
-                              </div>
+                              <div className="text-2xl">{gyvunoTipas.ikona}</div>
                               <div>
                                 <div className="font-medium">{gyvunas.vardas}</div>
                                 <div className="flex gap-3 text-xs text-gray-500">
@@ -341,7 +349,11 @@ export function BuildingDialog({
                               </div>
                             </div>
                             {galimaMaitinti && (
-                              <Button size="sm" onClick={() => onFeedAnimal(gyvunas.id)} className="farm-button">
+                              <Button
+                                size="sm"
+                                onClick={() => onFeedAnimal(gyvunas.id)}
+                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                              >
                                 Maitinti
                               </Button>
                             )}
@@ -369,13 +381,13 @@ export function BuildingDialog({
                   <ArrowUpCircle className="h-12 w-12 text-green-500 animate-pulse" />
                 </div>
                 <div className="flex justify-center">
-                  <div className="w-24 h-24 rounded-full bg-amber-50 flex items-center justify-center text-3xl border-4 border-amber-200">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center text-3xl">
                     {pastatoTipas?.ikona}
                   </div>
                 </div>
               </div>
 
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-500">
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">
                 <AnimatedCounter value={pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)} /> 💰
               </div>
 
@@ -397,7 +409,7 @@ export function BuildingDialog({
 
               <Button
                 onClick={handleUpgrade}
-                className="w-full farm-button farm-button-green"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                 disabled={pinigai < pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)}
               >
                 Atnaujinti pastatą

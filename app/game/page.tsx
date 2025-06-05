@@ -11,12 +11,11 @@ import { MarketDialog } from "@/components/game/market-dialog"
 import type { Ukis, Isteklius, Pastatas, Augalas, Gyvunas } from "@/lib/supabase"
 import { AUGALU_TIPAI, GYVUNU_TIPAI, PASTATU_TIPAI, RINKOS_KAINOS } from "@/lib/game-data"
 import { useToast } from "@/components/ui/use-toast"
-import { Store, Users, Trophy, LogOut, Wheat, Tractor, Leaf, Sun } from "lucide-react"
+import { Store, Users, Trophy, LogOut } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { UserMenu } from "@/components/game/user-menu"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 
 export default function DidysisUkis() {
   return (
@@ -467,18 +466,13 @@ function DidysisUkisContent() {
 
   if (!ukis) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="farm-card w-96">
-          <CardHeader className="farm-card-header">
+      <div className="min-h-screen bg-gradient-to-b from-green-100 to-green-200 flex items-center justify-center">
+        <Card className="w-96">
+          <CardHeader>
             <CardTitle className="text-center">Kraunama...</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <Wheat className="h-12 w-12 text-amber-500 animate-bounce-subtle" />
-              </div>
-              <div>Ruošiamas jūsų ūkis...</div>
-            </div>
+          <CardContent>
+            <div className="text-center">Ruošiamas jūsų ūkis...</div>
           </CardContent>
         </Card>
       </div>
@@ -486,38 +480,28 @@ function DidysisUkisContent() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-green-100 to-green-200">
       {/* Antraštė */}
-      <header className="farm-header sticky top-0 z-10">
+      <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <motion.div
-                initial={{ rotate: 0 }}
-                animate={{ rotate: [0, -5, 5, -5, 5, 0] }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5 }}
-              >
-                <Tractor className="h-8 w-8 text-green-600" />
-              </motion.div>
-              <div>
-                <h1 className="text-3xl font-bold text-amber-800 drop-shadow-sm">Didysis Ūkis</h1>
-                <div className="flex items-center">
-                  <p className="text-green-700 font-medium">{ukis.pavadinimas}</p>
-                  {isDemo && <Badge className="ml-2 bg-amber-500 text-white">Demo</Badge>}
-                </div>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-green-800">Didysis Ūkis</h1>
+              <p className="text-green-600">
+                {ukis.pavadinimas} {isDemo && <span className="text-amber-600">(Demo)</span>}
+              </p>
             </div>
 
             <div className="flex gap-2">
-              <Button className="farm-button" onClick={() => setShowMarketDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setShowMarketDialog(true)}>
                 <Store className="h-4 w-4 mr-1" />
                 Rinka
               </Button>
-              <Button className="farm-button farm-button-blue">
+              <Button variant="outline" size="sm">
                 <Users className="h-4 w-4 mr-1" />
                 Kaimynai
               </Button>
-              <Button className="farm-button farm-button-green">
+              <Button variant="outline" size="sm">
                 <Trophy className="h-4 w-4 mr-1" />
                 Užduotys
               </Button>
@@ -525,12 +509,9 @@ function DidysisUkisContent() {
               {/* Pridėti vartotojo meniu arba atsijungimo mygtuką */}
               {ukis && !isDemo && <UserMenu lygis={ukis.lygis} patirtis={ukis.patirtis} />}
               {isDemo && (
-                <Button
-                  className="farm-button bg-gradient-to-b from-red-500 to-red-600 text-white border-2 border-red-400"
-                  onClick={handleSignOut}
-                >
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-1" />
-                  Atsijungti
+                  Atsijungti iš demo
                 </Button>
               )}
             </div>
@@ -540,35 +521,24 @@ function DidysisUkisContent() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Išteklių juosta */}
-        <div className="farm-resource-bar mb-6">
-          <ResourceBar istekliai={istekliai} pinigai={ukis.pinigai} patirtis={ukis.patirtis} lygis={ukis.lygis} />
-        </div>
+        <ResourceBar istekliai={istekliai} pinigai={ukis.pinigai} patirtis={ukis.patirtis} lygis={ukis.lygis} />
 
         {/* Pagrindinis žaidimo laukas */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Ūkio tinklelis */}
           <div className="lg:col-span-3">
-            <Card className="farm-card">
-              <CardHeader className="farm-card-header flex flex-row justify-between items-center">
-                <CardTitle className="flex items-center gap-2">
-                  <Leaf className="h-5 w-5" />
-                  Jūsų ūkis
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Sun className="h-5 w-5 text-yellow-300 animate-pulse-grow" />
-                  <span className="text-sm">Graži diena ūkininkauti!</span>
-                </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Jūsų ūkis</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="farm-grid">
-                  <FarmGrid
-                    pastatai={pastatai}
-                    augalai={augalai}
-                    gyvunai={gyvunai}
-                    onBuildingClick={handleBuildingClick}
-                    onEmptySlotClick={handleEmptySlotClick}
-                  />
-                </div>
+                <FarmGrid
+                  pastatai={pastatai}
+                  augalai={augalai}
+                  gyvunai={gyvunai}
+                  onBuildingClick={handleBuildingClick}
+                  onEmptySlotClick={handleEmptySlotClick}
+                />
               </CardContent>
             </Card>
           </div>
@@ -576,26 +546,26 @@ function DidysisUkisContent() {
           {/* Šoninis meniu */}
           <div className="space-y-4">
             {/* Statistikos kortelė */}
-            <Card className="farm-card">
-              <CardHeader className="farm-card-header">
+            <Card>
+              <CardHeader>
                 <CardTitle className="text-lg">Statistikos</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Pastatai:</span>
-                  <Badge className="farm-badge bg-amber-100 text-amber-800">{pastatai.length}</Badge>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Pastatai:</span>
+                  <Badge variant="secondary">{pastatai.length}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Augalai:</span>
-                  <Badge className="farm-badge bg-green-100 text-green-800">{augalai.length}</Badge>
+                <div className="flex justify-between">
+                  <span>Augalai:</span>
+                  <Badge variant="secondary">{augalai.length}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Gyvūnai:</span>
-                  <Badge className="farm-badge bg-blue-100 text-blue-800">{gyvunai.length}</Badge>
+                <div className="flex justify-between">
+                  <span>Gyvūnai:</span>
+                  <Badge variant="secondary">{gyvunai.length}</Badge>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Ūkio vertė:</span>
-                  <Badge className="farm-badge bg-gradient-to-r from-amber-500 to-yellow-500 text-white">
+                <div className="flex justify-between">
+                  <span>Ūkio vertė:</span>
+                  <Badge variant="default">
                     {(
                       ukis.pinigai +
                       istekliai.reduce(
@@ -611,22 +581,19 @@ function DidysisUkisContent() {
             </Card>
 
             {/* Greiti veiksmai */}
-            <Card className="farm-card">
-              <CardHeader className="farm-card-header">
+            <Card>
+              <CardHeader>
                 <CardTitle className="text-lg">Greiti veiksmai</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <Button className="farm-button w-full" onClick={() => setShowMarketDialog(true)}>
+              <CardContent className="space-y-2">
+                <Button className="w-full" variant="outline" onClick={() => setShowMarketDialog(true)}>
                   <Store className="h-4 w-4 mr-2" />
                   Atidaryti rinką
                 </Button>
 
                 <Button
-                  className={`w-full ${
-                    !augalai.some((a) => new Date() >= new Date(a.derliaus_data))
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : "farm-button farm-button-green"
-                  }`}
+                  className="w-full"
+                  variant="outline"
                   onClick={() => {
                     // Automatiškai nuimti visus paruoštus derlius
                     const paruostiAugalai = augalai.filter((a) => new Date() >= new Date(a.derliaus_data))
@@ -638,17 +605,8 @@ function DidysisUkisContent() {
                 </Button>
 
                 <Button
-                  className={`w-full ${
-                    !gyvunai.some((g) => {
-                      const gyvunoInfo = GYVUNU_TIPAI[g.tipas as keyof typeof GYVUNU_TIPAI]
-                      const paskutinisMaisinimas = new Date(g.paskutinis_maisinimas)
-                      const dabar = new Date()
-                      const praejusLaikas = (dabar.getTime() - paskutinisMaisinimas.getTime()) / 1000
-                      return praejusLaikas >= gyvunoInfo.maisinimo_intervalas
-                    })
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : "farm-button farm-button-blue"
-                  }`}
+                  className="w-full"
+                  variant="outline"
                   onClick={() => {
                     // Automatiškai maitinti visus gyvūnus
                     gyvunai.forEach((g) => {
@@ -678,27 +636,16 @@ function DidysisUkisContent() {
             </Card>
 
             {/* Patarimai */}
-            <Card className="farm-card">
-              <CardHeader className="farm-card-header">
+            <Card>
+              <CardHeader>
                 <CardTitle className="text-lg">💡 Patarimai</CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="text-sm space-y-2 text-gray-700">
-                  <p className="flex items-center gap-2">
-                    <span className="text-amber-500 text-lg">•</span> Reguliariai maitinkite gyvūnus, kad gautumėte
-                    daugiau produktų
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-amber-500 text-lg">•</span> Atnaujinkite pastatus, kad padidintumėte
-                    efektyvumą
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-amber-500 text-lg">•</span> Stebėkite rinkos kainas prieš parduodami išteklius
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="text-amber-500 text-lg">•</span> Sodinkite įvairius augalus, kad diversifikuotumėte
-                    pajamas
-                  </p>
+              <CardContent>
+                <div className="text-sm space-y-2 text-gray-600">
+                  <p>• Reguliariai maitinkite gyvūnus, kad gautumėte daugiau produktų</p>
+                  <p>• Atnaujinkite pastatus, kad padidintumėte efektyvumą</p>
+                  <p>• Stebėkite rinkos kainas prieš parduodami išteklius</p>
+                  <p>• Sodinkite įvairius augalus, kad diversifikuotumėte pajamas</p>
                 </div>
               </CardContent>
             </Card>
@@ -709,29 +656,29 @@ function DidysisUkisContent() {
       {/* Pastatų statymo meniu */}
       {showBuildMenu && buildPosition && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="farm-card w-96">
-            <CardHeader className="farm-card-header">
+          <Card className="w-96">
+            <CardHeader>
               <CardTitle>Pasirinkite pastatą</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="space-y-3">
               {Object.entries(PASTATU_TIPAI).map(([key, pastatas]) => (
                 <Button
                   key={key}
-                  className={`w-full justify-start ${
-                    ukis.pinigai < pastatas.kaina ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "farm-button"
-                  }`}
+                  variant="outline"
+                  className="w-full justify-start"
                   onClick={() => handleBuildBuilding(key)}
                   disabled={ukis.pinigai < pastatas.kaina}
                 >
                   <span className="text-xl mr-3">{pastatas.ikona}</span>
                   <div className="text-left">
                     <div>{pastatas.pavadinimas}</div>
-                    <div className="text-sm text-amber-800">{pastatas.kaina} 💰</div>
+                    <div className="text-sm text-gray-500">{pastatas.kaina} 💰</div>
                   </div>
                 </Button>
               ))}
               <Button
-                className="w-full bg-gradient-to-b from-gray-400 to-gray-500 text-white border-2 border-gray-300"
+                variant="secondary"
+                className="w-full"
                 onClick={() => {
                   setShowBuildMenu(false)
                   setBuildPosition(null)

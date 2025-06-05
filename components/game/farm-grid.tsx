@@ -42,25 +42,25 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, delay: x * 0.1 + y * 0.1 }}
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.02 }}
           className="aspect-square"
         >
           <Card
             className={`h-full border-2 border-dashed ${
-              isHovered ? "border-green-400 bg-green-50" : "border-amber-200 bg-amber-50/30"
-            } hover:border-green-400 hover:bg-green-50 cursor-pointer transition-all duration-200 rounded-xl`}
+              isHovered ? "border-green-400 bg-green-50" : "border-gray-200 dark:border-gray-700"
+            } hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-all duration-200`}
             onClick={() => onEmptySlotClick(x, y)}
             onMouseEnter={() => setHoveredSlot(slotId)}
             onMouseLeave={() => setHoveredSlot(null)}
           >
             <CardContent className="flex items-center justify-center h-full p-2">
-              <motion.div
-                className="w-12 h-12 rounded-full bg-white flex items-center justify-center border-2 border-amber-200 shadow-md"
+              <motion.span
+                className="text-gray-400 text-2xl"
                 animate={{ scale: isHovered ? 1.2 : 1 }}
                 transition={{ duration: 0.2 }}
               >
-                <span className="text-amber-500 text-2xl font-bold">+</span>
-              </motion.div>
+                +
+              </motion.span>
             </CardContent>
           </Card>
         </motion.div>
@@ -106,29 +106,29 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3, delay: x * 0.1 + y * 0.1 }}
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.03 }}
         className="aspect-square"
       >
         <Card
           className={`h-full hover:shadow-lg cursor-pointer transition-all duration-200 ${
             isHovered ? "ring-2 ring-green-400 ring-opacity-50" : ""
-          } overflow-hidden rounded-xl border-2 border-amber-200 bg-white`}
+          } overflow-hidden`}
           onClick={() => onBuildingClick(pastatas)}
           onMouseEnter={() => setHoveredSlot(slotId)}
           onMouseLeave={() => setHoveredSlot(null)}
         >
           <CardContent className="p-2 h-full flex flex-col justify-between relative">
             <div className="flex justify-between items-start">
-              <motion.div
-                className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-200"
+              <motion.span
+                className="text-2xl"
                 animate={{ rotate: isHovered ? [0, -5, 5, -5, 5, 0] : 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <span className="text-2xl">{pastatoTipas?.ikona}</span>
-              </motion.div>
+                {pastatoTipas?.ikona}
+              </motion.span>
               <Badge
                 variant="secondary"
-                className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-full px-2 py-0.5 border border-green-200"
+                className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900"
               >
                 Lv.{pastatas.lygis}
               </Badge>
@@ -146,8 +146,8 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
                   {!progressInfo.paruostas ? (
                     <Progress
                       value={progressInfo.progresas}
-                      className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full"
-                      indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                      className="h-1.5 bg-gray-100 dark:bg-gray-800"
+                      indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500"
                     />
                   ) : (
                     <motion.div
@@ -157,7 +157,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
                     >
                       <Badge
                         variant="default"
-                        className="text-xs w-full justify-center bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full"
+                        className="text-xs w-full justify-center bg-green-500 hover:bg-green-600"
                       >
                         Paruošta!
                       </Badge>
@@ -198,7 +198,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
   }
 
   return (
-    <div className="grid grid-cols-4 gap-3 p-4">
+    <div className="grid grid-cols-4 gap-3 p-4 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg">
       {Array.from({ length: 16 }, (_, index) => {
         const x = index % 4
         const y = Math.floor(index / 4)
