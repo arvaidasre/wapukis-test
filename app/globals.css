@@ -10,46 +10,46 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 142.1 70.6% 45.3%; /* Default Green from design-system */
+    --primary: 142.1 76.2% 36.3%; /* Sodresnė žalia */
     --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 240 4.8% 95.9%;
+    --secondary: 39 100% 57%; /* Šilta geltona */
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
+    --accent: 27 96% 61%; /* Šilta oranžinė */
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 142.1 70.6% 45.3%; /* Ring color to match primary */
-    --radius: 0.5rem;
+    --ring: 142.1 76.2% 36.3%;
+    --radius: 1rem; /* Apvalesni kampai */
 
     /* Custom fonts */
-    --font-sans: "Inter", sans-serif; /* Fallback to Inter */
-    --font-heading: "Luckiest Guy", cursive; /* Fallback to Luckiest Guy */
+    --font-sans: "Inter", sans-serif;
+    --font-heading: "Luckiest Guy", cursive;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 20 14% 4%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 24 9.8% 10%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 98%;
     --primary: 142.1 70.6% 45.3%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 240 3.7% 15.9%;
+    --primary-foreground: 144.9 80.4% 10%;
+    --secondary: 39 70% 50%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --muted: 0 0% 15%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --accent: 27 70% 50%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 142.1 70.6% 45.3%;
+    --ring: 142.4 71.8% 29.2%;
   }
 }
 
@@ -59,6 +59,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: url("/textures/farm-pattern.png");
+    background-repeat: repeat;
   }
 
   /* Prieinamumo stiliai */
@@ -121,12 +123,82 @@ h6,
   font-family: var(--font-heading), cursive;
 }
 
-/* Ensure heading font is applied if not globally strong */
-.font-heading {
-  font-family: var(--font-heading), cursive !important;
+/* BigFarm stiliaus elementai */
+@layer components {
+  .farm-card {
+    @apply bg-white rounded-xl border-2 border-amber-200 shadow-lg overflow-hidden;
+    background-image: url("/textures/paper-texture.png");
+    background-repeat: repeat;
+  }
+
+  .farm-card-header {
+    @apply bg-gradient-to-r from-green-600 to-green-700 text-white p-3 border-b-2 border-amber-200;
+  }
+
+  .farm-button {
+    @apply rounded-full font-medium shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95;
+    background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+    @apply bg-gradient-to-b from-amber-400 to-amber-500 text-amber-900 border-2 border-amber-300;
+  }
+
+  .farm-button-green {
+    @apply bg-gradient-to-b from-green-500 to-green-600 text-white border-2 border-green-400;
+  }
+
+  .farm-button-blue {
+    @apply bg-gradient-to-b from-blue-500 to-blue-600 text-white border-2 border-blue-400;
+  }
+
+  .farm-badge {
+    @apply rounded-full px-3 py-1 text-xs font-bold shadow-sm;
+  }
+
+  .farm-header {
+    @apply bg-gradient-to-r from-amber-100 to-amber-200 border-b-4 border-amber-300 shadow-md;
+    background-image: url("/textures/wood-texture.png");
+    background-repeat: repeat;
+  }
+
+  .farm-grid {
+    @apply bg-gradient-to-b from-green-200 to-green-300 rounded-xl p-4 shadow-inner;
+    background-image: url("/textures/grass-texture.png");
+    background-repeat: repeat;
+  }
+
+  .farm-resource-bar {
+    @apply bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-3 shadow-md border-2 border-amber-200;
+  }
+
+  .farm-tooltip {
+    @apply bg-amber-50 border-2 border-amber-200 rounded-lg shadow-lg p-2;
+  }
 }
 
-/* Add a subtle text shadow for better readability on complex backgrounds */
-h1.font-heading {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+/* Animacijos */
+@keyframes bounce-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s infinite ease-in-out;
+}
+
+@keyframes pulse-grow {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-grow {
+  animation: pulse-grow 2s infinite ease-in-out;
 }

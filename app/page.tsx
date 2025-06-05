@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
+import { Play, Info, Settings, Award, LogIn } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { FarmGrid } from "@/components/game/farm-grid"
 import { ResourceBar } from "@/components/game/resource-bar"
@@ -16,123 +19,167 @@ import { AuthGuard } from "@/components/auth/auth-guard"
 import { UserMenu } from "@/components/game/user-menu"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 
-import Link from "next/link"
-import Image from "next/image"
-import { motion } from "framer-motion"
-import { PlayCircle, Settings, HelpCircle, Award, Sun, Sparkles } from "lucide-react"
+export default function HomePage() {
+  const router = useRouter()
+  const [isLoaded, setIsLoaded] = useState(false)
 
-export default function MainMenuPage() {
-  const buttonVariants = {
-    hover: {
-      scale: 1.05,
-      transition: { type: "spring", stiffness: 300, damping: 15 },
-    },
-    tap: { scale: 0.95 },
-  }
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: (i: number) => ({
-      y: 0,
-      opacity: 1,
-      transition: {
-        delay: i * 0.15,
-        type: "spring",
-        stiffness: 100,
-        damping: 12,
-      },
-    }),
-  }
-
-  const menuButtons = [
-    { href: "/game", label: "Pradėti Žaidimą", icon: <PlayCircle className="mr-3 h-7 w-7" />, primary: true },
-    { href: "/settings", label: "Nustatymai", icon: <Settings className="mr-3 h-6 w-6" /> },
-    { href: "/how-to-play", label: "Kaip Žaisti?", icon: <HelpCircle className="mr-3 h-6 w-6" /> },
-    { href: "/credits", label: "Kreditai", icon: <Award className="mr-3 h-6 w-6" /> },
-  ]
+  useEffect(() => {
+    setIsLoaded(true)
+  }, [])
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background Image */}
-      <Image
-        src="/images/farm-main-menu-bg.png"
-        alt="Linksmas ūkio peizažas"
-        layout="fill"
-        objectFit="cover"
-        quality={90}
-        className="-z-10"
-        priority
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Fonas */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/textures/farm-background.png')",
+          filter: "brightness(0.9)",
+        }}
       />
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/20 -z-10" />
 
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+      {/* Dekoratyviniai elementai */}
+      <motion.div
+        className="absolute top-20 left-20 text-6xl"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.2 }}
+      >
+        🌾
+      </motion.div>
+      <motion.div
+        className="absolute bottom-20 right-20 text-6xl"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.4 }}
+      >
+        🐄
+      </motion.div>
+      <motion.div
+        className="absolute top-40 right-40 text-6xl"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.6 }}
+      >
+        🌽
+      </motion.div>
+      <motion.div
+        className="absolute bottom-40 left-40 text-6xl"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.8 }}
+      >
+        🐔
+      </motion.div>
+
+      {/* Turinys */}
+      <div className="container mx-auto px-4 py-16 relative z-10">
         <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, type: "spring", stiffness: 120, damping: 10 }}
-          className="relative mb-8"
+          className="text-center mb-8"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          <Image
-            src="/images/leaf-decoration-menu.png"
-            alt="Dekoratyviniai lapai"
-            width={100}
-            height={100}
-            className="absolute -top-10 -left-16 opacity-80 transform -rotate-12"
-          />
-          <Sun className="absolute -top-8 -right-12 h-16 w-16 text-yellow-300 opacity-70 animate-pulse" />
-          <h1 className="font-heading text-7xl sm:text-8xl md:text-9xl text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)]">
-            Didysis Ūkis
-          </h1>
-          <Sparkles className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 h-10 w-10 text-yellow-200 opacity-60" />
+          <h1 className="text-5xl md:text-7xl font-bold text-amber-800 drop-shadow-lg mb-4">Didysis Ūkis</h1>
+          <p className="text-xl md:text-2xl text-green-700 max-w-2xl mx-auto">
+            Sukurk ir valdyk savo ūkį, augink augalus, prižiūrėk gyvūnus ir tapk turtingiausiu ūkininku!
+          </p>
         </motion.div>
 
-        <motion.div initial="hidden" animate="visible" className="w-full max-w-md">
-          <Card className="bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
-            <div className="bg-yellow-50 dark:bg-yellow-800/30 p-6 sm:p-8 rounded-md border-2 border-yellow-700 dark:border-yellow-800">
-              <div className="space-y-4">
-                {menuButtons.map((item, index) => (
-                  <motion.div key={item.href} custom={index} variants={itemVariants}>
-                    <Link href={item.href} passHref legacyBehavior>
-                      <Button
-                        as="a"
-                        variant={item.primary ? "default" : "secondary"}
-                        size="lg"
-                        className={`w-full text-lg py-7 rounded-lg shadow-md transition-all duration-150 ease-in-out
-                          ${
-                            item.primary
-                              ? "bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
-                              : "bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
-                          }
-                          focus:ring-4 focus:ring-offset-2 focus:ring-offset-yellow-50 dark:focus:ring-offset-yellow-700
-                          ${item.primary ? "focus:ring-amber-400" : "focus:ring-lime-500"}
-                        `}
-                        // @ts-ignore
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                        // Cast to motion.button props
-                        {...(motion.button as any)}
-                      >
-                        {item.icon}
-                        {item.label}
-                      </Button>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="farm-card h-full">
+              <CardHeader className="farm-card-header">
+                <CardTitle>Pradėk žaisti dabar!</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <p className="text-gray-600">
+                  Prisijunk prie tūkstančių kitų ūkininkų ir pradėk kurti savo ūkio imperiją. Sodink, augink, prekiauk
+                  ir plėsk savo valdas!
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    className="w-full farm-button farm-button-green text-lg py-6"
+                    onClick={() => router.push("/game")}
+                  >
+                    <Play className="mr-2 h-5 w-5" />
+                    Žaisti dabar
+                  </Button>
+                  <Button className="w-full farm-button text-lg py-6" onClick={() => router.push("/auth")}>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Prisijungti
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="space-y-4"
+          >
+            <Card className="farm-card">
+              <CardHeader className="farm-card-header">
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  Apie žaidimą
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <span className="text-amber-500 text-lg">•</span> Augink įvairius augalus ir prižiūrėk gyvūnus
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-amber-500 text-lg">•</span> Prekiauk turguje ir uždirbk pinigų
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-amber-500 text-lg">•</span> Plėsk savo ūkį ir statyk naujus pastatus
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-amber-500 text-lg">•</span> Bendrauk su kitais ūkininkais
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="farm-card">
+                <CardHeader className="farm-card-header p-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Nustatymai
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  <Button className="w-full farm-button" size="sm" onClick={() => router.push("/settings")}>
+                    Atidaryti
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="farm-card">
+                <CardHeader className="farm-card-header p-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Award className="h-4 w-4" />
+                    Kreditai
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  <Button className="w-full farm-button" size="sm" onClick={() => router.push("/credits")}>
+                    Atidaryti
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
-          </Card>
-        </motion.div>
-
-        <motion.footer
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: menuButtons.length * 0.15 + 0.5, duration: 0.5 }}
-          className="mt-12 text-sm text-white/80 drop-shadow-sm"
-        >
-          &copy; {new Date().getFullYear()} Didysis Ūkis. Visos teisės saugomos.
-        </motion.footer>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
@@ -499,7 +546,7 @@ function DidysisUkisContent() {
     const gyvunas = gyvunai.find((g) => g.id === gyvunoId)
     if (!gyvunas) return
 
-    const gyvunoInfo = GYVUNU_TIPAI[gyvunas.tipas as keyof typeof GYVUNU_TIPAI]
+    const gyvunoInfo = GYVUNU_TIPAI[gyvuno.tipas as keyof typeof GYVUNU_TIPAI]
 
     // Atnaujinti gyvūną
     setGyvunai((prev) =>

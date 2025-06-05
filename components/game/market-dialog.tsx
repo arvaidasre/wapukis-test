@@ -100,23 +100,29 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-to-b from-white to-green-50 dark:from-gray-950 dark:to-green-950 border-none shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="p-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900 dark:to-yellow-900 rounded-full">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto border-2 border-amber-200 rounded-xl bg-white">
+        <DialogHeader className="bg-gradient-to-r from-amber-500 to-amber-600 -mx-6 -mt-6 px-6 py-4 rounded-t-xl">
+          <DialogTitle className="flex items-center gap-2 text-xl text-white">
+            <div className="p-1.5 bg-white rounded-full">
               <Store className="h-6 w-6 text-amber-600" />
             </div>
-            Rinka
+            Turgaus aikštė
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="pirkti" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-amber-100/50 dark:bg-amber-900/20">
-            <TabsTrigger value="pirkti" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+          <TabsList className="grid w-full grid-cols-2 bg-amber-50 rounded-full p-1 mt-2">
+            <TabsTrigger
+              value="pirkti"
+              className="data-[state=active]:bg-white data-[state=active]:text-amber-700 rounded-full"
+            >
               <TrendingDown className="h-4 w-4 mr-2" />
               Pirkti
             </TabsTrigger>
-            <TabsTrigger value="parduoti" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+            <TabsTrigger
+              value="parduoti"
+              className="data-[state=active]:bg-white data-[state=active]:text-green-700 rounded-full"
+            >
               <TrendingUp className="h-4 w-4 mr-2" />
               Parduoti
             </TabsTrigger>
@@ -131,17 +137,17 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                  <Card className="overflow-hidden border-none shadow-md">
-                    <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950">
+                  <Card className="overflow-hidden border-2 border-amber-200 rounded-xl">
+                    <CardHeader className="pb-3 bg-gradient-to-r from-amber-50 to-amber-100">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border-2 border-amber-200">
+                          <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                        </div>
                         {resourceNames[tipas as keyof typeof resourceNames]}
-                        <span className="text-sm font-normal text-amber-600 dark:text-amber-400">
-                          ({kainos.pirkimo} 💰 už vienetą)
-                        </span>
+                        <span className="text-sm font-normal text-amber-600">({kainos.pirkimo} 💰 už vienetą)</span>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3 p-4 bg-white dark:bg-gray-800">
+                    <CardContent className="space-y-3 p-4 bg-white">
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <Label htmlFor={`buy-${tipas}`}>Kiekis:</Label>
@@ -157,14 +163,11 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
                               }))
                             }
                             placeholder="0"
-                            className="bg-white dark:bg-gray-900"
+                            className="bg-white border-2 border-amber-200 rounded-full"
                           />
                         </div>
                         <div className="flex flex-col justify-end">
-                          <Button
-                            onClick={() => handleBuy(tipas)}
-                            className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-                          >
+                          <Button onClick={() => handleBuy(tipas)} className="farm-button">
                             Pirkti už{" "}
                             <AnimatedCounter
                               value={(quantities[`buy-${tipas}`] || 0) * kainos.pirkimo}
@@ -193,18 +196,22 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <Card className="overflow-hidden border-none shadow-md">
-                      <CardHeader className="pb-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+                    <Card className="overflow-hidden border-2 border-amber-200 rounded-xl">
+                      <CardHeader className="pb-3 bg-gradient-to-r from-green-50 to-green-100">
                         <CardTitle className="flex items-center gap-2 text-lg">
-                          <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border-2 border-green-200">
+                            <span className="text-2xl">{resourceIcons[tipas as keyof typeof resourceIcons]}</span>
+                          </div>
                           {resourceNames[tipas as keyof typeof resourceNames]}
-                          <span className="text-sm font-normal text-green-600 dark:text-green-400">
-                            ({kainos.pardavimo} 💰 už vienetą)
-                          </span>
+                          <span className="text-sm font-normal text-green-600">({kainos.pardavimo} 💰 už vienetą)</span>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-3 p-4 bg-white dark:bg-gray-800">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Turite: {turimas} vienetų</div>
+                      <CardContent className="space-y-3 p-4 bg-white">
+                        <div className="text-sm text-gray-600 flex items-center gap-2">
+                          <div className="px-2 py-1 bg-amber-50 rounded-full border border-amber-200">
+                            Turite: {turimas} vienetų
+                          </div>
+                        </div>
                         <div className="flex gap-2">
                           <div className="flex-1">
                             <Label htmlFor={`sell-${tipas}`}>Kiekis:</Label>
@@ -221,14 +228,14 @@ export function MarketDialog({ open, onClose, istekliai, pinigai, onBuyResource,
                                 }))
                               }
                               placeholder="0"
-                              className="bg-white dark:bg-gray-900"
+                              className="bg-white border-2 border-amber-200 rounded-full"
                               disabled={turimas === 0}
                             />
                           </div>
                           <div className="flex flex-col justify-end">
                             <Button
                               onClick={() => handleSell(tipas)}
-                              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                              className="farm-button farm-button-green"
                               disabled={turimas === 0 || !quantities[`sell-${tipas}`]}
                             >
                               Parduoti už{" "}
