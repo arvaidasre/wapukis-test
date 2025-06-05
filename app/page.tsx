@@ -19,12 +19,16 @@ import { authFunctions, dbFunctions } from "@/lib/supabase"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { PlayCircle, Settings, HelpCircle, Award, Sun, Sparkles } from "lucide-react"
+import { PlayCircle, Settings, HelpCircle, Award, Sun, Sparkles, LogIn, Ghost } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 // Create a motion-enabled version of the Button component
 const MotionButton = motion(Button)
 
 export default function MainMenuPage() {
+  const [showStartGameOptions, setShowStartGameOptions] = useState(false)
+  const router = useRouter()
+
   const buttonVariants = {
     hover: {
       scale: 1.05,
@@ -48,11 +52,24 @@ export default function MainMenuPage() {
   }
 
   const menuButtons = [
-    { href: "/game", label: "Pradėti Žaidimą", icon: <PlayCircle className="mr-3 h-7 w-7" />, primary: true },
+    {
+      label: "Pradėti Žaidimą",
+      icon: <PlayCircle className="mr-3 h-7 w-7" />,
+      primary: true,
+      action: () => setShowStartGameOptions(true), // Show options instead of direct link
+    },
     { href: "/settings", label: "Nustatymai", icon: <Settings className="mr-3 h-6 w-6" /> },
     { href: "/how-to-play", label: "Kaip Žaisti?", icon: <HelpCircle className="mr-3 h-6 w-6" /> },
     { href: "/credits", label: "Kreditai", icon: <Award className="mr-3 h-6 w-6" /> },
   ]
+
+  const handlePlayDemo = () => {
+    router.push("/game?demo=true")
+  }
+
+  const handleLoginRegister = () => {
+    router.push("/auth")
+  }
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -95,10 +112,32 @@ export default function MainMenuPage() {
             <div className="bg-yellow-50 dark:bg-yellow-800/30 p-6 sm:p-8 rounded-md border-2 border-yellow-700 dark:border-yellow-800">
               <div className="space-y-4">
                 {menuButtons.map((item, index) => (
-                  <motion.div key={item.href} custom={index} variants={itemVariants}>
-                    <Link href={item.href} passHref legacyBehavior>
+                  <motion.div key={item.label} custom={index} variants={itemVariants}>
+                    {item.href ? (
+                      <Link href={item.href} passHref legacyBehavior>
+                        <MotionButton
+                          as="a"
+                          variant={item.primary ? "default" : "secondary"}
+                          size="lg"
+                          className={`w-full text-lg py-7 rounded-lg shadow-md transition-all duration-150 ease-in-out
+                            ${
+                              item.primary
+                                ? "bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
+                                : "bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+                            }
+                            focus:ring-4 focus:ring-offset-2 focus:ring-offset-yellow-50 dark:focus:ring-offset-yellow-700
+                            ${item.primary ? "focus:ring-amber-400" : "focus:ring-lime-500"}
+                          `}
+                          variants={buttonVariants}
+                          whileHover="hover"
+                          whileTap="tap"
+                        >
+                          {item.icon}
+                          {item.label}
+                        </MotionButton>
+                      </Link>
+                    ) : (
                       <MotionButton
-                        as="a" // Ensure it renders as an <a> tag for Link legacyBehavior
                         variant={item.primary ? "default" : "secondary"}
                         size="lg"
                         className={`w-full text-lg py-7 rounded-lg shadow-md transition-all duration-150 ease-in-out
@@ -113,11 +152,12 @@ export default function MainMenuPage() {
                         variants={buttonVariants}
                         whileHover="hover"
                         whileTap="tap"
+                        onClick={item.action}
                       >
                         {item.icon}
                         {item.label}
                       </MotionButton>
-                    </Link>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -134,6 +174,52 @@ export default function MainMenuPage() {
           &copy; {new Date().getFullYear()} Didysis Ūkis. Visos teisės saugomos.
         </motion.footer>
       </div>
+
+      {/* Start Game Options Dialog */}
+      {showStartGameOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+            <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-6 sm:p-8 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+              <CardTitle className="font-heading text-3xl text-green-800 dark:text-green-200 text-center">
+                Pradėti Žaidimą
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 sm:p-8 bg-yellow-50 dark:bg-yellow-800/30 rounded-b-md space-y-4">
+              <MotionButton
+                variant="default"
+                size="lg"
+                className="w-full text-lg py-7 rounded-lg shadow-md bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700 font-semibold"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onClick={handlePlayDemo}
+              >
+                <Ghost className="mr-3 h-6 w-6" />
+                Žaisti Demo Versiją
+              </MotionButton>
+              <MotionButton
+                variant="secondary"
+                size="lg"
+                className="w-full text-lg py-7 rounded-lg shadow-md bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onClick={handleLoginRegister}
+              >
+                <LogIn className="mr-3 h-6 w-6" />
+                Prisijungti / Registruotis
+              </MotionButton>
+              <Button
+                variant="ghost"
+                className="w-full text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                onClick={() => setShowStartGameOptions(false)}
+              >
+                Atšaukti
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

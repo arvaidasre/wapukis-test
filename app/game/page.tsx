@@ -14,12 +14,13 @@ import { useToast } from "@/components/ui/use-toast"
 import { Store, Users, Trophy, LogOut } from "lucide-react"
 import { UserMenu } from "@/components/game/user-menu"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation" // Import useSearchParams
 import Image from "next/image"
 
 export default function GamePage() {
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams() // Get search params
 
   // Žaidimo būsena
   const [ukis, setUkis] = useState<Ukis | null>(null)
@@ -45,6 +46,14 @@ export default function GamePage() {
   const initializeGame = async () => {
     try {
       console.log("Initializing game...")
+
+      const isDemoModeRequested = searchParams.get("demo") === "true" // Check for demo query param
+
+      if (isDemoModeRequested) {
+        console.log("Demo mode requested via URL, initializing demo game.")
+        initializeDemoGame()
+        return
+      }
 
       const hasSession = await authFunctions.hasActiveSession()
 
@@ -471,7 +480,7 @@ export default function GamePage() {
                   variant="secondary"
                   size="sm"
                   onClick={handleSignOut}
-                  className="bg-red-600 hover:bg-red-700 text-white border-2 border-red-800"
+                  className="bg-red-500 hover:bg-red-600 text-white border-2 border-red-700"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
                   Atsijungti iš demo
