@@ -47,17 +47,17 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
   return (
     <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
       <TooltipProvider>
-        <Card className="mb-4 overflow-hidden border-none shadow-md">
+        <Card className="mb-4 overflow-hidden border-4 border-yellow-800 dark:border-yellow-900 shadow-lg bg-yellow-600/80 dark:bg-yellow-700/80 backdrop-blur-sm">
           <CardContent className="p-0">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 p-3">
+            <div className="bg-yellow-50 dark:bg-yellow-800/30 p-3 rounded-md">
               <div className="flex flex-wrap gap-4 items-center justify-between">
                 {/* Pinigai ir lygis */}
                 <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm">
+                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border border-yellow-300 dark:border-yellow-700">
                     <Coins className="h-5 w-5 text-yellow-500" />
                     <AnimatedCounter
                       value={pinigai}
-                      className="font-semibold"
+                      className="font-semibold text-green-800 dark:text-green-200"
                       formatValue={(val) => val.toLocaleString()}
                     />
                   </div>
@@ -66,7 +66,7 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                     <div className="flex items-center gap-1.5">
                       <TooltipIcon
                         icon={
-                          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-semibold shadow-sm">
+                          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-semibold shadow-sm border border-amber-700">
                             {lygis}
                           </div>
                         }
@@ -81,9 +81,9 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                       />
                       <Star className="h-4 w-4 text-yellow-500" />
                     </div>
-                    <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-300 dark:border-gray-600">
                       <div
-                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-500"
                         style={{ width: `${patirtisProgresas}%` }}
                       />
                     </div>
@@ -96,9 +96,12 @@ export function ResourceBar({ istekliai, pinigai, patirtis, lygis }: ResourceBar
                     <TooltipIcon
                       key={tipas}
                       icon={
-                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-full shadow-sm">
+                        <div className="flex items-center gap-1.5 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-full shadow-sm border border-yellow-300 dark:border-yellow-700">
                           {getResourceIcon(tipas)}
-                          <AnimatedCounter value={getResourceAmount(tipas)} className="text-sm font-medium" />
+                          <AnimatedCounter
+                            value={getResourceAmount(tipas)}
+                            className="text-sm font-medium text-green-800 dark:text-green-200"
+                          />
                         </div>
                       }
                       content={

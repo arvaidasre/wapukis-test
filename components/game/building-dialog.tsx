@@ -156,38 +156,38 @@ export function BuildingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-gradient-to-b from-white to-green-50 dark:from-gray-950 dark:to-green-950 border-none shadow-xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="p-1.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-full">
+      <DialogContent className="max-w-md bg-yellow-50 dark:bg-gray-800 border-4 border-yellow-700 dark:border-yellow-900 shadow-xl">
+        <DialogHeader className="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+          <DialogTitle className="flex items-center gap-2 text-xl font-heading text-green-800 dark:text-green-200">
+            <div className="p-1.5 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900 dark:to-yellow-900 rounded-full">
               {getBuildingIcon()}
             </div>
             <div className="flex items-center gap-2">
               {pastatoTipas?.pavadinimas}
-              <Badge
-                variant="secondary"
-                className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900"
-              >
+              <Badge variant="secondary" className="bg-lime-200 text-lime-800 dark:bg-lime-800 dark:text-lime-200">
                 Lygis {pastatas.lygis}
               </Badge>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="veiksmai" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-green-100/50 dark:bg-green-900/20">
-            <TabsTrigger value="veiksmai" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
+        <Tabs defaultValue="veiksmai" className="w-full p-4">
+          <TabsList className="grid w-full grid-cols-2 bg-lime-100/50 dark:bg-lime-900/20 border border-lime-300 dark:border-lime-700">
+            <TabsTrigger
+              value="veiksmai"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 text-lime-800 dark:text-lime-200"
+            >
               Veiksmai
             </TabsTrigger>
             <TabsTrigger
               value="atnaujinimas"
-              className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+              className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 text-lime-800 dark:text-lime-200"
             >
               Atnaujinimas
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="veiksmai" className="space-y-4 mt-4">
+          <TabsContent value="veiksmai" className="space-y-4 mt-4 text-green-900 dark:text-green-100">
             {pastatas.tipas === "laukas" && (
               <div className="space-y-4">
                 {laukoAugalai.length === 0 ? (
@@ -199,10 +199,10 @@ export function BuildingDialog({
                   >
                     <Label>Pasirinkite augalą sodinimui:</Label>
                     <Select value={selectedCrop} onValueChange={setSelectedCrop}>
-                      <SelectTrigger className="bg-white dark:bg-gray-800">
+                      <SelectTrigger className="bg-white dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700">
                         <SelectValue placeholder="Pasirinkite augalą" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700">
                         {Object.entries(AUGALU_TIPAI).map(([key, augalas]) => (
                           <SelectItem key={key} value={key}>
                             <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export function BuildingDialog({
                     </Select>
                     <Button
                       onClick={handlePlantCrop}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                      className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700"
                     >
                       Sodinti
                     </Button>
@@ -236,7 +236,7 @@ export function BuildingDialog({
                         return (
                           <motion.div
                             key={augalas.id}
-                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm border-yellow-300 dark:border-yellow-700"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
@@ -255,7 +255,7 @@ export function BuildingDialog({
                               <Button
                                 size="sm"
                                 onClick={() => onHarvestCrop(augalas.id)}
-                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                                className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
                               >
                                 Nuimti derlių
                               </Button>
@@ -279,10 +279,10 @@ export function BuildingDialog({
                 >
                   <Label>Pirkti gyvūną:</Label>
                   <Select value={selectedAnimal} onValueChange={setSelectedAnimal}>
-                    <SelectTrigger className="bg-white dark:bg-gray-800">
+                    <SelectTrigger className="bg-white dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700">
                       <SelectValue placeholder="Pasirinkite gyvūną" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700">
                       {Object.entries(GYVUNU_TIPAI).map(([key, gyvunas]) => (
                         <SelectItem key={key} value={key}>
                           <div className="flex items-center gap-2">
@@ -302,13 +302,13 @@ export function BuildingDialog({
                       value={animalName}
                       onChange={(e) => setAnimalName(e.target.value)}
                       placeholder="Įveskite vardą"
-                      className="bg-white dark:bg-gray-800"
+                      className="bg-white dark:bg-gray-800 border border-yellow-300 dark:border-yellow-700"
                     />
                   </div>
 
                   <Button
                     onClick={handleBuyAnimal}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700"
                   >
                     Pirkti gyvūną
                   </Button>
@@ -332,7 +332,7 @@ export function BuildingDialog({
                         return (
                           <motion.div
                             key={gyvunas.id}
-                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+                            className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 shadow-sm border-yellow-300 dark:border-yellow-700"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
@@ -352,7 +352,7 @@ export function BuildingDialog({
                               <Button
                                 size="sm"
                                 onClick={() => onFeedAnimal(gyvunas.id)}
-                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                                className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
                               >
                                 Maitinti
                               </Button>
@@ -367,7 +367,7 @@ export function BuildingDialog({
             )}
           </TabsContent>
 
-          <TabsContent value="atnaujinimas" className="space-y-4 mt-4">
+          <TabsContent value="atnaujinimas" className="space-y-4 mt-4 text-green-900 dark:text-green-100">
             <motion.div
               className="text-center space-y-5 py-4"
               initial={{ opacity: 0, y: 10 }}
@@ -378,16 +378,16 @@ export function BuildingDialog({
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ArrowUpCircle className="h-12 w-12 text-green-500 animate-pulse" />
+                  <ArrowUpCircle className="h-12 w-12 text-amber-500 animate-pulse" />
                 </div>
                 <div className="flex justify-center">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center text-3xl">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900 dark:to-yellow-900 flex items-center justify-center text-3xl border border-yellow-300 dark:border-yellow-700">
                     {pastatoTipas?.ikona}
                   </div>
                 </div>
               </div>
 
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">
+              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-500">
                 <AnimatedCounter value={pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)} /> 💰
               </div>
 
@@ -409,7 +409,7 @@ export function BuildingDialog({
 
               <Button
                 onClick={handleUpgrade}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white border-2 border-amber-700"
                 disabled={pinigai < pastatoTipas?.atnaujinimo_kaina(pastatas.lygis)}
               >
                 Atnaujinti pastatą

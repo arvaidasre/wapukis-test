@@ -47,15 +47,17 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
         >
           <Card
             className={`h-full border-2 border-dashed ${
-              isHovered ? "border-green-400 bg-green-50" : "border-gray-200 dark:border-gray-700"
-            } hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-all duration-200`}
+              isHovered
+                ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20"
+                : "border-yellow-300 dark:border-yellow-700"
+            } hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer transition-all duration-200 bg-yellow-50 dark:bg-yellow-800/30`}
             onClick={() => onEmptySlotClick(x, y)}
             onMouseEnter={() => setHoveredSlot(slotId)}
             onMouseLeave={() => setHoveredSlot(null)}
           >
             <CardContent className="flex items-center justify-center h-full p-2">
               <motion.span
-                className="text-gray-400 text-2xl"
+                className="text-yellow-700 dark:text-yellow-300 text-2xl"
                 animate={{ scale: isHovered ? 1.2 : 1 }}
                 transition={{ duration: 0.2 }}
               >
@@ -69,10 +71,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
 
     const pastatoTipas = PASTATU_TIPAI[pastatas.tipas as keyof typeof PASTATU_TIPAI]
 
-    // Rasti augalus šiame lauke
     const laukoAugalai = augalai.filter((a) => a.lauko_id === pastatas.id)
-
-    // Rasti gyvūnus šiame tvarte
     const tvartoGyvunai = gyvunai.filter((g) => g.tvarto_id === pastatas.id)
 
     const getProgressInfo = () => {
@@ -111,8 +110,8 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
       >
         <Card
           className={`h-full hover:shadow-lg cursor-pointer transition-all duration-200 ${
-            isHovered ? "ring-2 ring-green-400 ring-opacity-50" : ""
-          } overflow-hidden`}
+            isHovered ? "ring-2 ring-amber-400 ring-opacity-50" : ""
+          } overflow-hidden bg-yellow-50 dark:bg-yellow-800/30 border border-yellow-300 dark:border-yellow-700`}
           onClick={() => onBuildingClick(pastatas)}
           onMouseEnter={() => setHoveredSlot(slotId)}
           onMouseLeave={() => setHoveredSlot(null)}
@@ -128,13 +127,13 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
               </motion.span>
               <Badge
                 variant="secondary"
-                className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900"
+                className="text-xs bg-lime-200 text-lime-800 dark:bg-lime-800 dark:text-lime-200"
               >
                 Lv.{pastatas.lygis}
               </Badge>
             </div>
 
-            <div className="space-y-1 z-10">
+            <div className="space-y-1 z-10 text-green-900 dark:text-green-100">
               <div className="text-xs font-medium truncate">{pastatoTipas?.pavadinimas}</div>
 
               {progressInfo && (
@@ -147,7 +146,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
                     <Progress
                       value={progressInfo.progresas}
                       className="h-1.5 bg-gray-100 dark:bg-gray-800"
-                      indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500"
+                      indicatorClassName="bg-gradient-to-r from-amber-500 to-yellow-500"
                     />
                   ) : (
                     <motion.div
@@ -157,7 +156,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
                     >
                       <Badge
                         variant="default"
-                        className="text-xs w-full justify-center bg-green-500 hover:bg-green-600"
+                        className="text-xs w-full justify-center bg-amber-500 hover:bg-amber-600 text-white"
                       >
                         Paruošta!
                       </Badge>
@@ -184,7 +183,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
             {/* Dekoratyviniai elementai */}
             {isHovered && (
               <motion.div
-                className="absolute inset-0 bg-gradient-to-t from-green-500/10 to-transparent pointer-events-none"
+                className="absolute inset-0 bg-gradient-to-t from-amber-500/10 to-transparent pointer-events-none"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -198,7 +197,7 @@ export function FarmGrid({ pastatai, augalai, gyvunai, onBuildingClick, onEmptyS
   }
 
   return (
-    <div className="grid grid-cols-4 gap-3 p-4 bg-gradient-to-b from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 rounded-lg">
+    <div className="grid grid-cols-4 gap-3 p-4 bg-yellow-50 dark:bg-yellow-800/30 rounded-lg border-2 border-yellow-700 dark:border-yellow-800">
       {Array.from({ length: 16 }, (_, index) => {
         const x = index % 4
         const y = Math.floor(index / 4)

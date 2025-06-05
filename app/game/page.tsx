@@ -12,20 +12,12 @@ import type { Ukis, Isteklius, Pastatas, Augalas, Gyvunas } from "@/lib/supabase
 import { AUGALU_TIPAI, GYVUNU_TIPAI, PASTATU_TIPAI, RINKOS_KAINOS } from "@/lib/game-data"
 import { useToast } from "@/components/ui/use-toast"
 import { Store, Users, Trophy, LogOut } from "lucide-react"
-import { AuthGuard } from "@/components/auth/auth-guard"
 import { UserMenu } from "@/components/game/user-menu"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
-export default function DidysisUkis() {
-  return (
-    <AuthGuard>
-      <DidysisUkisContent />
-    </AuthGuard>
-  )
-}
-
-function DidysisUkisContent() {
+export default function GamePage() {
   const { toast } = useToast()
   const router = useRouter()
 
@@ -50,12 +42,10 @@ function DidysisUkisContent() {
     initializeGame()
   }, [])
 
-  // Update the initializeGame function to handle the case where no farm exists yet
   const initializeGame = async () => {
     try {
       console.log("Initializing game...")
 
-      // Pirmiausia patikriname, ar yra aktyvi sesija
       const hasSession = await authFunctions.hasActiveSession()
 
       if (!hasSession) {
@@ -64,7 +54,6 @@ function DidysisUkisContent() {
         return
       }
 
-      // Bandyti gauti dabartinį vartotoją
       const { user } = await authFunctions.getCurrentUser()
 
       if (!user) {
@@ -76,7 +65,6 @@ function DidysisUkisContent() {
       console.log("Authenticated user found:", user.id)
       setCurrentUser(user)
 
-      // Gauti vartotojo ūkį
       const { data: ukisData, error: ukisError } = await dbFunctions.getUserFarm(user.id)
 
       if (ukisError) {
@@ -85,13 +73,9 @@ function DidysisUkisContent() {
         return
       }
 
-      // If no farm exists, create one
       if (!ukisData) {
         console.log("No farm found, creating a new one")
-
-        // Create default farm name if user doesn't have one
         const farmName = user.user_metadata?.ukio_pavadinimas || "Mano ūkis"
-
         const { data: newFarm, error: createError } = await dbFunctions.createFarm(user.id, farmName)
 
         if (createError || !newFarm) {
@@ -101,32 +85,21 @@ function DidysisUkisContent() {
         }
 
         console.log("New farm created:", newFarm)
-
-        // Create initial resources and buildings
         await dbFunctions.createInitialResources(newFarm.id)
         await dbFunctions.createInitialBuildings(newFarm.id)
-
         setUkis(newFarm)
 
-        // Fetch the newly created resources and buildings
         const { data: newIstekliai } = await dbFunctions.supabase
           .from("istekliai")
           .select("*")
           .eq("ukio_id", newFarm.id)
-
-        if (newIstekliai) {
-          setIstekliai(newIstekliai)
-        }
+        if (newIstekliai) setIstekliai(newIstekliai)
 
         const { data: newPastatai } = await dbFunctions.supabase.from("pastatai").select("*").eq("ukio_id", newFarm.id)
-
-        if (newPastatai) {
-          setPastatai(newPastatai)
-        }
+        if (newPastatai) setPastatai(newPastatai)
 
         setAugalai([])
         setGyvunai([])
-
         console.log("Game initialized with new farm")
         return
       }
@@ -134,36 +107,20 @@ function DidysisUkisContent() {
       console.log("Farm found:", ukisData)
       setUkis(ukisData)
 
-      // Gauti išteklius
       const { data: istekliaiData } = await dbFunctions.supabase
         .from("istekliai")
         .select("*")
         .eq("ukio_id", ukisData.id)
+      if (istekliaiData) setIstekliai(istekliaiData)
 
-      if (istekliaiData) {
-        setIstekliai(istekliaiData)
-      }
-
-      // Gauti pastatus
       const { data: pastataiData } = await dbFunctions.supabase.from("pastatai").select("*").eq("ukio_id", ukisData.id)
+      if (pastataiData) setPastatai(pastataiData)
 
-      if (pastataiData) {
-        setPastatai(pastataiData)
-      }
-
-      // Gauti augalus
       const { data: augalaiData } = await dbFunctions.supabase.from("augalai").select("*").eq("ukio_id", ukisData.id)
+      if (augalaiData) setAugalai(augalaiData)
 
-      if (augalaiData) {
-        setAugalai(augalaiData)
-      }
-
-      // Gauti gyvūnus
       const { data: gyvunaiData } = await dbFunctions.supabase.from("gyvunai").select("*").eq("ukio_id", ukisData.id)
-
-      if (gyvunaiData) {
-        setGyvunai(gyvunaiData)
-      }
+      if (gyvunaiData) setGyvunai(gyvunaiData)
 
       console.log("Game initialized successfully with database")
     } catch (error) {
@@ -177,7 +134,6 @@ function DidysisUkisContent() {
     console.log("Initializing demo game...")
     setIsDemo(true)
 
-    // Sukurti demo ūkį
     const demoUkis: Ukis = {
       id: "demo-ukis",
       vartotojo_id: "demo-user",
@@ -187,10 +143,8 @@ function DidysisUkisContent() {
       patirtis: 0,
       sukurimo_data: new Date().toISOString(),
     }
-
     setUkis(demoUkis)
 
-    // Pradiniai ištekliai
     const pradiniaiIstekliai: Isteklius[] = [
       { id: "1", ukio_id: demoUkis.id, tipas: "grudai", kiekis: 50, atnaujinimo_data: new Date().toISOString() },
       { id: "2", ukio_id: demoUkis.id, tipas: "vaisiai", kiekis: 20, atnaujinimo_data: new Date().toISOString() },
@@ -198,10 +152,8 @@ function DidysisUkisContent() {
       { id: "4", ukio_id: demoUkis.id, tipas: "kiausiniai", kiekis: 15, atnaujinimo_data: new Date().toISOString() },
       { id: "5", ukio_id: demoUkis.id, tipas: "mesa", kiekis: 5, atnaujinimo_data: new Date().toISOString() },
     ]
-
     setIstekliai(pradiniaiIstekliai)
 
-    // Pradiniai pastatai
     const pradiniaiPastatai: Pastatas[] = [
       {
         id: "pastatas-1",
@@ -224,32 +176,27 @@ function DidysisUkisContent() {
         sukurimo_data: new Date().toISOString(),
       },
     ]
-
     setPastatai(pradiniaiPastatai)
     setAugalai([])
     setGyvunai([])
 
     console.log("Demo game initialized successfully")
-
     toast({
       title: "Demo režimas",
       description: "Žaidžiate demo režimu. Duomenys nebus išsaugoti.",
     })
   }
 
-  // Pastato paspaudimas
   const handleBuildingClick = (pastatas: Pastatas) => {
     setSelectedBuilding(pastatas)
     setShowBuildingDialog(true)
   }
 
-  // Tuščios vietos paspaudimas
   const handleEmptySlotClick = (x: number, y: number) => {
     setBuildPosition({ x, y })
     setShowBuildMenu(true)
   }
 
-  // Pastato statymas
   const handleBuildBuilding = (tipas: string) => {
     if (!buildPosition || !ukis) return
 
@@ -285,7 +232,6 @@ function DidysisUkisContent() {
     })
   }
 
-  // Augalo sodinimas
   const handlePlantCrop = (pastatoId: string, augaloTipas: string) => {
     if (!ukis) return
 
@@ -312,24 +258,20 @@ function DidysisUkisContent() {
     })
   }
 
-  // Derliaus nuėmimas
   const handleHarvestCrop = (augaloId: string) => {
     const augalas = augalai.find((a) => a.id === augaloId)
     if (!augalas || !ukis) return
 
     const augaloInfo = AUGALU_TIPAI[augalas.tipas as keyof typeof AUGALU_TIPAI]
 
-    // Pašalinti augalą
     setAugalai((prev) => prev.filter((a) => a.id !== augaloId))
 
-    // Pridėti išteklius
     setIstekliai((prev) =>
       prev.map((i) =>
         i.tipas === "grudai" || i.tipas === "vaisiai" ? { ...i, kiekis: i.kiekis + augaloInfo.pardavimo_kaina / 2 } : i,
       ),
     )
 
-    // Pridėti patirtį
     setUkis((prev) =>
       prev
         ? {
@@ -346,7 +288,6 @@ function DidysisUkisContent() {
     })
   }
 
-  // Gyvūno pirkimas
   const handleBuyAnimal = (pastatoId: string, gyvunoTipas: string, vardas: string) => {
     if (!ukis) return
 
@@ -374,14 +315,12 @@ function DidysisUkisContent() {
     })
   }
 
-  // Gyvūno maitinimas
   const handleFeedAnimal = (gyvunoId: string) => {
     const gyvunas = gyvunai.find((g) => g.id === gyvunoId)
     if (!gyvunas) return
 
     const gyvunoInfo = GYVUNU_TIPAI[gyvunas.tipas as keyof typeof GYVUNU_TIPAI]
 
-    // Atnaujinti gyvūną
     setGyvunai((prev) =>
       prev.map((g) =>
         g.id === gyvunoId
@@ -395,7 +334,6 @@ function DidysisUkisContent() {
       ),
     )
 
-    // Pridėti produktą
     setIstekliai((prev) =>
       prev.map((i) => (i.tipas === gyvunoInfo.produktas ? { ...i, kiekis: i.kiekis + gyvunoInfo.produkto_kiekis } : i)),
     )
@@ -406,7 +344,6 @@ function DidysisUkisContent() {
     })
   }
 
-  // Pastato atnaujinimas
   const handleUpgradeBuilding = (pastatoId: string) => {
     const pastatas = pastatai.find((p) => p.id === pastatoId)
     if (!pastatas || !ukis) return
@@ -424,7 +361,6 @@ function DidysisUkisContent() {
     })
   }
 
-  // Išteklių pirkimas
   const handleBuyResource = (tipas: string, kiekis: number) => {
     if (!ukis) return
 
@@ -439,7 +375,6 @@ function DidysisUkisContent() {
     })
   }
 
-  // Išteklių pardavimas
   const handleSellResource = (tipas: string, kiekis: number) => {
     if (!ukis) return
 
@@ -454,13 +389,11 @@ function DidysisUkisContent() {
     })
   }
 
-  // Atsijungimas iš demo režimo
   const handleSignOut = () => {
     toast({
       title: "Atsijungta iš demo",
       description: "Grįžtate į pagrindinį meniu. 👋",
     })
-
     router.push("/")
   }
 
@@ -480,36 +413,66 @@ function DidysisUkisContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-100 to-green-200">
-      {/* Antraštė */}
-      <header className="bg-white shadow-sm border-b">
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Background Image */}
+      <Image
+        src="/placeholder.svg?height=1080&width=1920"
+        alt="Linksmas ūkio peizažas"
+        layout="fill"
+        objectFit="cover"
+        quality={90}
+        className="-z-10"
+        priority
+      />
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/20 -z-10" />
+
+      {/* Header */}
+      <header className="relative z-10 bg-yellow-600/80 dark:bg-yellow-700/80 border-b-4 border-yellow-800 dark:border-yellow-900 shadow-lg">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-green-800">Didysis Ūkis</h1>
-              <p className="text-green-600">
-                {ukis.pavadinimas} {isDemo && <span className="text-amber-600">(Demo)</span>}
+              <h1 className="font-heading text-3xl text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.2)]">Didysis Ūkis</h1>
+              <p className="text-yellow-50 text-sm">
+                {ukis.pavadinimas} {isDemo && <span className="text-amber-200">(Demo)</span>}
               </p>
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowMarketDialog(true)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowMarketDialog(true)}
+                className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+              >
                 <Store className="h-4 w-4 mr-1" />
                 Rinka
               </Button>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+              >
                 <Users className="h-4 w-4 mr-1" />
                 Kaimynai
               </Button>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+              >
                 <Trophy className="h-4 w-4 mr-1" />
                 Užduotys
               </Button>
 
-              {/* Pridėti vartotojo meniu arba atsijungimo mygtuką */}
               {ukis && !isDemo && <UserMenu lygis={ukis.lygis} patirtis={ukis.patirtis} />}
               {isDemo && (
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="bg-red-600 hover:bg-red-700 text-white border-2 border-red-800"
+                >
                   <LogOut className="h-4 w-4 mr-1" />
                   Atsijungti iš demo
                 </Button>
@@ -519,7 +482,7 @@ function DidysisUkisContent() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 relative z-0">
         {/* Išteklių juosta */}
         <ResourceBar istekliai={istekliai} pinigai={ukis.pinigai} patirtis={ukis.patirtis} lygis={ukis.lygis} />
 
@@ -527,9 +490,9 @@ function DidysisUkisContent() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Ūkio tinklelis */}
           <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Jūsų ūkis</CardTitle>
+            <Card className="bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+              <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+                <CardTitle className="font-heading text-2xl text-green-800 dark:text-green-200">Jūsų ūkis</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <FarmGrid
@@ -546,26 +509,32 @@ function DidysisUkisContent() {
           {/* Šoninis meniu */}
           <div className="space-y-4">
             {/* Statistikos kortelė */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Statistikos</CardTitle>
+            <Card className="bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+              <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+                <CardTitle className="font-heading text-xl text-green-800 dark:text-green-200">Statistikos</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="p-4 bg-yellow-50 dark:bg-yellow-800/30 rounded-b-md text-green-900 dark:text-green-100 space-y-3">
                 <div className="flex justify-between">
                   <span>Pastatai:</span>
-                  <Badge variant="secondary">{pastatai.length}</Badge>
+                  <Badge variant="secondary" className="bg-lime-200 text-lime-800 dark:bg-lime-800 dark:text-lime-200">
+                    {pastatai.length}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Augalai:</span>
-                  <Badge variant="secondary">{augalai.length}</Badge>
+                  <Badge variant="secondary" className="bg-lime-200 text-lime-800 dark:bg-lime-800 dark:text-lime-200">
+                    {augalai.length}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Gyvūnai:</span>
-                  <Badge variant="secondary">{gyvunai.length}</Badge>
+                  <Badge variant="secondary" className="bg-lime-200 text-lime-800 dark:bg-lime-800 dark:text-lime-200">
+                    {gyvunai.length}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Ūkio vertė:</span>
-                  <Badge variant="default">
+                  <Badge variant="default" className="bg-amber-500 text-white dark:bg-amber-700 dark:text-amber-100">
                     {(
                       ukis.pinigai +
                       istekliai.reduce(
@@ -581,21 +550,24 @@ function DidysisUkisContent() {
             </Card>
 
             {/* Greiti veiksmai */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Greiti veiksmai</CardTitle>
+            <Card className="bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+              <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+                <CardTitle className="font-heading text-xl text-green-800 dark:text-green-200">
+                  Greiti veiksmai
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline" onClick={() => setShowMarketDialog(true)}>
+              <CardContent className="p-4 bg-yellow-50 dark:bg-yellow-800/30 rounded-b-md space-y-2">
+                <Button
+                  className="w-full bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
+                  onClick={() => setShowMarketDialog(true)}
+                >
                   <Store className="h-4 w-4 mr-2" />
                   Atidaryti rinką
                 </Button>
 
                 <Button
-                  className="w-full"
-                  variant="outline"
+                  className="w-full bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
                   onClick={() => {
-                    // Automatiškai nuimti visus paruoštus derlius
                     const paruostiAugalai = augalai.filter((a) => new Date() >= new Date(a.derliaus_data))
                     paruostiAugalai.forEach((a) => handleHarvestCrop(a.id))
                   }}
@@ -605,10 +577,8 @@ function DidysisUkisContent() {
                 </Button>
 
                 <Button
-                  className="w-full"
-                  variant="outline"
+                  className="w-full bg-lime-600 hover:bg-lime-700 text-white border-2 border-lime-800"
                   onClick={() => {
-                    // Automatiškai maitinti visus gyvūnus
                     gyvunai.forEach((g) => {
                       const gyvunoInfo = GYVUNU_TIPAI[g.tipas as keyof typeof GYVUNU_TIPAI]
                       const paskutinisMaisinimas = new Date(g.paskutinis_maisinimas)
@@ -636,12 +606,12 @@ function DidysisUkisContent() {
             </Card>
 
             {/* Patarimai */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">💡 Patarimai</CardTitle>
+            <Card className="bg-yellow-600/80 dark:bg-yellow-700/80 border-4 border-yellow-800 dark:border-yellow-900 shadow-2xl backdrop-blur-sm p-2 rounded-xl">
+              <CardHeader className="bg-yellow-50 dark:bg-yellow-800/30 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+                <CardTitle className="font-heading text-xl text-green-800 dark:text-green-200">💡 Patarimai</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-sm space-y-2 text-gray-600">
+              <CardContent className="p-4 bg-yellow-50 dark:bg-yellow-800/30 rounded-b-md text-green-900 dark:text-green-100">
+                <div className="text-sm space-y-2">
                   <p>• Reguliariai maitinkite gyvūnus, kad gautumėte daugiau produktų</p>
                   <p>• Atnaujinkite pastatus, kad padidintumėte efektyvumą</p>
                   <p>• Stebėkite rinkos kainas prieš parduodami išteklius</p>
@@ -656,16 +626,18 @@ function DidysisUkisContent() {
       {/* Pastatų statymo meniu */}
       {showBuildMenu && buildPosition && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-96">
-            <CardHeader>
-              <CardTitle>Pasirinkite pastatą</CardTitle>
+          <Card className="w-96 bg-yellow-50 dark:bg-gray-800 border-4 border-yellow-700 dark:border-yellow-900 shadow-xl">
+            <CardHeader className="bg-yellow-100 dark:bg-yellow-900/50 p-4 rounded-t-md border-b-2 border-yellow-700 dark:border-yellow-800">
+              <CardTitle className="font-heading text-2xl text-green-800 dark:text-green-200">
+                Pasirinkite pastatą
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 p-4">
               {Object.entries(PASTATU_TIPAI).map(([key, pastatas]) => (
                 <Button
                   key={key}
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start bg-lime-100 hover:bg-lime-200 text-lime-800 border-2 border-lime-300 dark:bg-lime-900 dark:hover:bg-lime-800 dark:text-lime-100 dark:border-lime-700"
                   onClick={() => handleBuildBuilding(key)}
                   disabled={ukis.pinigai < pastatas.kaina}
                 >
@@ -678,7 +650,7 @@ function DidysisUkisContent() {
               ))}
               <Button
                 variant="secondary"
-                className="w-full"
+                className="w-full bg-red-500 hover:bg-red-600 text-white border-2 border-red-700"
                 onClick={() => {
                   setShowBuildMenu(false)
                   setBuildPosition(null)
