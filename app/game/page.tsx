@@ -11,10 +11,11 @@ import { MarketDialog } from "@/components/game/market-dialog"
 import type { Ukis, Isteklius, Pastatas, Augalas, Gyvunas } from "@/lib/supabase"
 import { AUGALU_TIPAI, GYVUNU_TIPAI, PASTATU_TIPAI, RINKOS_KAINOS } from "@/lib/game-data"
 import { useToast } from "@/components/ui/use-toast"
-import { Store, Users, Trophy } from "lucide-react"
+import { Store, Users, Trophy, LogOut } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { UserMenu } from "@/components/game/user-menu"
 import { authFunctions, dbFunctions } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 export default function DidysisUkis() {
   return (
@@ -26,6 +27,7 @@ export default function DidysisUkis() {
 
 function DidysisUkisContent() {
   const { toast } = useToast()
+  const router = useRouter()
 
   // Žaidimo būsena
   const [ukis, setUkis] = useState<Ukis | null>(null)
@@ -452,6 +454,16 @@ function DidysisUkisContent() {
     })
   }
 
+  // Atsijungimas iš demo režimo
+  const handleSignOut = () => {
+    toast({
+      title: "Atsijungta iš demo",
+      description: "Grįžtate į pagrindinį meniu. 👋",
+    })
+
+    router.push("/")
+  }
+
   if (!ukis) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-100 to-green-200 flex items-center justify-center">
@@ -494,8 +506,14 @@ function DidysisUkisContent() {
                 Užduotys
               </Button>
 
-              {/* Pridėti vartotojo meniu tik jei ne demo */}
+              {/* Pridėti vartotojo meniu arba atsijungimo mygtuką */}
               {ukis && !isDemo && <UserMenu lygis={ukis.lygis} patirtis={ukis.patirtis} />}
+              {isDemo && (
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Atsijungti iš demo
+                </Button>
+              )}
             </div>
           </div>
         </div>
